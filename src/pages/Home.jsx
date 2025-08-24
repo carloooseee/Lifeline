@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "../firebase";
+import '../styles/home.css';
 
 function Home() {
   const [user, setUser] = useState(null);
