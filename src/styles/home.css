@@ -6,3 +6,13 @@
     align-items: center;
     flex-direction: column;
 }
+
+.Home *{
+    margin-bottom: 10px;
+}
+.helpButton{
+    background-color: rgb(203, 0, 0);
+    color: white;
+    padding: 10px 20px;
+    cursor: pointer;
+}
