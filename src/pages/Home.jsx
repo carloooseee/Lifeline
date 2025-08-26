@@ -7,42 +7,71 @@ function Home() {
   const [user, setUser] = useState(null);
   const [coords, setCoords] = useState(null);
   const auth = getAuth(app);
+  
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    setUser(currentUser);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-
-    // Load last saved location (if any) from localStorage
-    const savedCoords = localStorage.getItem("lastLocation");
-    if (savedCoords) {
-      setCoords(JSON.parse(savedCoords));
+    if (currentUser && coords) {
+      // Always store as an object with uid + coords
+      const dataToSave = {
+        coords: coords,
+      };
+      localStorage.setItem("lastLocation", JSON.stringify(dataToSave));
     }
+  });
 
-    return () => unsubscribe();
-  }, [auth]);
+  // Load saved location + uid
+  const savedData = localStorage.getItem("lastLocation");
+  if (savedData) {
+    try {
+      const parsed = JSON.parse(savedData);
+      if (parsed.coords) {
+        setCoords(parsed.coords);
+      }
+      if (parsed.uid) {
+        setUser({ uid: parsed.uid });
+      }
+    } catch (err) {
+      console.error("Error parsing lastLocation:", err);
+    }
+  }
+
+  return () => unsubscribe();
+}, [auth, coords]);
+
+
+
+
   const sendHelpRequest = () => {
     if (coords && !coords.error) {  
     } else {
       alert("Location not available. Please share your location first.");
     }
   };
-  const handleShareLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const newCoords = { latitude, longitude };
-        setCoords(newCoords);
+const handleShareLocation = () => {
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude } = pos.coords;
+      const newCoords = { latitude, longitude };
+      setCoords(newCoords);
 
-        // Save in localStorage for offline use
-        localStorage.setItem("lastLocation", JSON.stringify(newCoords));
-      },
-      (err) => {
-        console.error(err.message);
-        setCoords({ error: err.message });
+      if (user) {
+        // Always save UID + coords together
+        const dataToSave = {
+          uid: user.uid,
+          coords: newCoords,
+        };
+        localStorage.setItem("lastLocation", JSON.stringify(dataToSave));
       }
-    );
-  };
+    },
+    (err) => {
+      console.error(err.message);
+      setCoords({ error: err.message });
+    }
+  );
+};
+
 
   return (
     <div className="Home">
@@ -58,7 +87,7 @@ function Home() {
         <p>Loading user...</p>
       )}
       <button className="helpButton" onClick={sendHelpRequest}>
-        Send Help - di pa gumagana
+        Send Help
       </button>
       <button onClick={handleShareLocation}>
         Share My Location
