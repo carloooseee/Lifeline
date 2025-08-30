@@ -47,10 +47,11 @@ useEffect(() => {
       time: new Date().toISOString(),
       
 };
-
-// save to localStorage
 localStorage.setItem("alert", JSON.stringify(alertData));
+alert("Help request sent!");
   };
+
+// Share Location Button
 const handleShareLocation = () => {
   navigator.geolocation.getCurrentPosition(
     (pos) => {
@@ -81,14 +82,9 @@ const [internetStatus, setInternetStatus] = useState(navigator.onLine ? "Online"
   }
 
   useEffect(() => {
-    // Check immediately
     handleInternetStatus();
-
-    // Listen for changes
     window.addEventListener("online", handleInternetStatus);
     window.addEventListener("offline", handleInternetStatus);
-
-    // Cleanup
     return () => {
       window.removeEventListener("online", handleInternetStatus);
       window.removeEventListener("offline", handleInternetStatus);
