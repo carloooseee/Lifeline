@@ -23,26 +23,24 @@ useEffect(() => {
 
   // Load saved location + uid
   const savedData = localStorage.getItem("lastLocation");
-  if (savedData) {
-    try {
-      const parsed = JSON.parse(savedData);
-      if (parsed.coords) {
-        setCoords(parsed.coords);
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.coords) {
+          setCoords(parsed.coords);
+        }
+        if (parsed.uid) {
+          setUser({ uid: parsed.uid });
+        }
+      } catch (err) {
+        console.error("Error parsing lastLocation:", err);
       }
-      if (parsed.uid) {
-        setUser({ uid: parsed.uid });
-      }
-    } catch (err) {
-      console.error("Error parsing lastLocation:", err);
-    }
   }
 
   return () => unsubscribe();
 }, [auth, coords]);
 
-
-
-
+// Help Request Button
   const sendHelpRequest = () => {
     const alertData = {
       message: "HELP",
@@ -75,7 +73,27 @@ const handleShareLocation = () => {
     }
   );
 };
+const [internetStatus, setInternetStatus] = useState(navigator.onLine ? "Online" : "Offline");
 
+  // Single function for handling status
+  function handleInternetStatus() {
+    setInternetStatus(navigator.onLine ? "Online" : "Offline");
+  }
+
+  useEffect(() => {
+    // Check immediately
+    handleInternetStatus();
+
+    // Listen for changes
+    window.addEventListener("online", handleInternetStatus);
+    window.addEventListener("offline", handleInternetStatus);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("online", handleInternetStatus);
+      window.removeEventListener("offline", handleInternetStatus);
+    };
+  }, []);
 
   return (
     <div className="Home">
@@ -90,6 +108,12 @@ const handleShareLocation = () => {
       ) : (
         <p>Loading user...</p>
       )}
+      <p>
+        Status:{" "}
+        <span style={{ color: internetStatus === "Online" ? "#6baf26" : "red" }}>
+          <b>{internetStatus}</b>
+        </span>
+      </p>
       <button className="helpButton" onClick={sendHelpRequest}>
         Send Help
       </button>
