@@ -44,10 +44,14 @@ useEffect(() => {
 
 
   const sendHelpRequest = () => {
-    if (coords && !coords.error) {  
-    } else {
-      alert("Location not available. Please share your location first.");
-    }
+    const alertData = {
+      message: "HELP",
+      time: new Date().toISOString(),
+      
+};
+
+// save to localStorage
+localStorage.setItem("alert", JSON.stringify(alertData));
   };
 const handleShareLocation = () => {
   navigator.geolocation.getCurrentPosition(
