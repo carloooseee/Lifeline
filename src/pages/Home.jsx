@@ -40,16 +40,39 @@ useEffect(() => {
   return () => unsubscribe();
 }, [auth, coords]);
 
-// Help Request Button
-  const sendHelpRequest = () => {
-    const alertData = {
-      message: "HELP",
-      time: new Date().toISOString(),
-      
-};
-localStorage.setItem("alert", JSON.stringify(alertData));
-alert("Help request sent!");
+// Help Request Buttonn
+const sendHelpRequest = () => {
+  const savedData = localStorage.getItem("lastLocation");
+  let fallbackCoords = null;
+
+  if (savedData) {
+    try {
+      const parsed = JSON.parse(savedData);
+      if (parsed.coords) {
+        fallbackCoords = parsed.coords;
+      }
+    } catch (err) {
+      console.error("Error parsing lastLocation:", err);
+    }
+  }
+
+  const alertData = {
+    user: user.isAnonymous
+      ? `Guest (Temporary ID: ${user.uid})`
+      : user.email,
+    coords: coords
+      ? coords
+      : fallbackCoords
+      ? fallbackCoords
+      : { error: "No location shared" },
+    message: "HELP",
+    time: new Date().toISOString(),
   };
+
+  localStorage.setItem("alert", JSON.stringify(alertData));
+  alert("Help request sent!");
+};
+
 
 // Share Location Button
 const handleShareLocation = () => {
@@ -114,7 +137,7 @@ const [internetStatus, setInternetStatus] = useState(navigator.onLine ? "Online"
         Send Help
       </button>
       <button onClick={handleShareLocation}>
-        Share My Location
+        Store My Location
       </button>
 
       {coords && !coords.error && (
