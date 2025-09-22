@@ -1,8 +1,51 @@
-.area{
-    height: 100vh;
-    width: 100vw;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
+.area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  padding: 20px;
+}
+
+.filter {
+  margin-bottom: 10px;
+}
+
+.filter button {
+  margin: 0 5px;
+    padding: 10px 20px;
+  border: none;
+  background: rgb(0, 55, 157);
+  color: white;
+  cursor: pointer;
+}
+
+.filter button:hover {
+  background: rgb(0, 44, 124)
+}
+
+.alertBox {
+  width: 80%;
+  max-width: 600px;
+  max-height: 300px;   /* ✅ fixed height */
+  overflow-y: auto;    /* ✅ scrollable */
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f9f9f9;
+  text-align: left;    /* details look cleaner */
+}
+
+.alertBox ol {
+  padding-left: 20px;
+}
+
+.alertBox li {
+  margin-bottom: 15px;
+}
+
+.details {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #333;
 }

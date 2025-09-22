@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { db } from "../firebase"; 
-import "../styles/report.css";
+import { db } from "../firebase";
+import MapView from "../components/MapView";
+import "../styles/report.css"; 
 
 function History() {
   const [alerts, setAlerts] = useState([]);
-  const [filter, setFilter] = useState("all"); // all, 24h, 7d
+  const [filter, setFilter] = useState("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,47 +33,55 @@ function History() {
     fetchAlerts();
   }, []);
 
-  // Apply filter
-  const filteredAlerts = alerts.filter((alert) => {
-    if (!alert.time) return false;
+  const filterAlerts = (alerts) => {
+    if (filter === "all") return alerts;
 
     const now = new Date();
-    const diffMs = now - alert.time;
-    const diffHours = diffMs / (1000 * 60 * 60);
+    return alerts.filter((alert) => {
+      if (!alert.time) return false;
 
-    if (filter === "24h") return diffHours <= 24;
-    if (filter === "7d") return diffHours <= 24 * 7;
-    return true; // "all"
-  });
+      const diff = now - alert.time;
+      if (filter === "24h") return diff <= 24 * 60 * 60 * 1000;
+      if (filter === "7d") return diff <= 7 * 24 * 60 * 60 * 1000;
+
+      return true;
+    });
+  };
 
   return (
     <div className="area">
       <h1>Alert History</h1>
-
-      {/* Filter Buttons */}
-      <div style={{ marginBottom: "1rem" }}>
+      <div className="filter">
         <button onClick={() => setFilter("all")}>All</button>
         <button onClick={() => setFilter("24h")}>Last 24 Hours</button>
         <button onClick={() => setFilter("7d")}>Last 7 Days</button>
       </div>
 
-      {filteredAlerts.length === 0 ? (
-        <p>No alerts found</p>
-      ) : (
-        <ul>
-          {filteredAlerts.map((alert) => (
-            <li key={alert.id}>
-              <strong>{alert.message}</strong> <br />
-              From: {alert.user} <br />
-              Location: {alert.coords.latitude}, {alert.coords.longitude} <br />
-              Time:{" "}
-              {alert.time
-                ? alert.time.toLocaleString()
-                : "No time provided"}
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* Alerts list*/}
+      <div className="alertBox">
+        {filterAlerts(alerts).length === 0 ? (
+          <p>No alerts found</p>
+        ) : (
+          <ol>
+            {filterAlerts(alerts).map((alert, index) => (
+              <li key={alert.id}>
+                <strong>{alert.message}</strong>
+                <div className="details">
+                  From: {alert.user} <br />
+                  Location: {alert.coords.latitude}, {alert.coords.longitude} <br />
+                  Time:{" "}
+                  {alert.time
+                    ? alert.time.toLocaleString()
+                    : "No time provided"}
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+
+      {/* Show pins on map */}
+      <MapView alerts={filterAlerts(alerts)} />
 
       <button className="viewButton" onClick={() => navigate("/home")}>
         Go back
