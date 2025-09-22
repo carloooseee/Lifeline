@@ -15,7 +15,7 @@ export default function Login() {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/home"); // 👈 change this later to your Profile route
+      navigate("/home");
     } catch (err) {
       setError(err.message);
     }

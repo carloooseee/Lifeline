@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, addDoc } from "firebase/firestore"; 
+import { useNavigate } from "react-router-dom";
 import { app } from "../firebase";
 import "../styles/home.css";
 
@@ -12,7 +13,7 @@ function Home() {
   const [internetStatus, setInternetStatus] = useState(
     navigator.onLine ? "Online" : "Offline"
   );
-
+  const navigate = useNavigate();
   const auth = getAuth(app);
 
   // Auth + load last saved location
@@ -163,12 +164,12 @@ function Home() {
           <b>{internetStatus}</b>
         </span>
       </p>
-
+      {/* Send Help Request Button */}
       <button className="helpButton" onClick={sendHelpRequest}>
         Send Help
       </button>
+      {/* Store Location in Local Storage Button */}
       <button onClick={handleShareLocation}>Store My Location</button>
-
       {coords && !coords.error && (
         <p>
           Last known Coordinates - Latitude: {coords.latitude}, Longitude:{" "}
@@ -176,6 +177,10 @@ function Home() {
         </p>
       )}
       {coords?.error && <p>Error: {coords.error}</p>}
+      {/* View Alerts */}
+      <button className="viewButton" onClick={() => navigate("/reports")}>
+        View Alert
+      </button>
     </div>
   );
 }
