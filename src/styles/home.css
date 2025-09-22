@@ -23,3 +23,7 @@
     padding: 10px 20px;
     cursor: pointer;
 }
+.logoutButton{
+    color: rgb(255, 0, 0);
+    cursor: pointer;
+}

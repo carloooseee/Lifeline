@@ -126,10 +126,19 @@ function Home() {
     );
   };
 
-  // Online/offline status
-  function handleInternetStatus() {
-    setInternetStatus(navigator.onLine ? "Online" : "Offline");
+
+ // Online/offline status
+function handleInternetStatus() {
+  const nowOnline = navigator.onLine;
+  setInternetStatus(nowOnline ? "Online" : "Offline");
+
+  // Retry Sync Pending Alerts 
+  // ANGAS POTA, ETO PAGMAMALAKE NATEN 3 LINES OF CODE
+  if (nowOnline) {
+    syncPendingAlert();
   }
+}
+
 
   useEffect(() => {
     handleInternetStatus();
@@ -181,6 +190,7 @@ function Home() {
       <button className="viewButton" onClick={() => navigate("/reports")}>
         View Alert
       </button>
+      <a className="logoutButton" onClick={() => navigate("/")}>log out</a>
     </div>
   );
 }
