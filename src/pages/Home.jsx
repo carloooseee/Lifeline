@@ -13,6 +13,7 @@ function Home() {
   const [internetStatus, setInternetStatus] = useState(
     navigator.onLine ? "Online" : "Offline"
   );
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const auth = getAuth(app);
 
@@ -63,6 +64,8 @@ function Home() {
       }
     }
 
+    const finalMessage = message.trim() === "" ? "HELP" : message.trim();
+
     const alertData = {
       user: user
         ? user.isAnonymous
@@ -70,14 +73,15 @@ function Home() {
           : user.email
         : "Unknown User",
       coords: coords || fallbackCoords || { error: "No location shared" },
-      message: "HELP",
+      message: finalMessage,
       time: new Date().toISOString(),
     };
 
     if (navigator.onLine) {
       try {
         await addDoc(collection(db, "Alerts"), alertData);
-        alert("Help request sent to Firebase!");
+        alert(`Help request sent! (${finalMessage})`);
+        setMessage(""); // ✅ clear after sending
       } catch (err) {
         console.error("Error writing to Firestore:", err);
         localStorage.setItem("pendingAlert", JSON.stringify(alertData));
@@ -105,6 +109,7 @@ function Home() {
 
   // Share Location Button
   const handleShareLocation = () => {
+    const finalMessage = message.trim() === "" ? "HELP" : message.trim();
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -113,14 +118,14 @@ function Home() {
 
         if (user) {
           const dataToSave = {
-                user: user
-                  ? user.isAnonymous
-                    ? `Guest (Temporary ID: ${user.uid})`
-                    : user.email
-                  : "Unknown User",
-                coords: coords || { error: "No location shared" },
-                message: "HELP",
-                time: new Date().toISOString(),
+            user: user
+              ? user.isAnonymous
+                ? `Guest (Temporary ID: ${user.uid})`
+                : user.email
+              : "Unknown User",
+            coords: coords || { error: "No location shared" },
+            message: finalMessage,
+            time: new Date().toISOString(),
           };
           localStorage.setItem("lastLocation", JSON.stringify(dataToSave));
         }
@@ -132,19 +137,16 @@ function Home() {
     );
   };
 
+  // Online/offline status
+  function handleInternetStatus() {
+    const nowOnline = navigator.onLine;
+    setInternetStatus(nowOnline ? "Online" : "Offline");
 
- // Online/offline status
-function handleInternetStatus() {
-  const nowOnline = navigator.onLine;
-  setInternetStatus(nowOnline ? "Online" : "Offline");
-
-  // Retry Sync Pending Alerts 
-  // ANGAS POTA, ETO PAGMAMALAKE NATEN 3 LINES OF CODE
-  if (nowOnline) {
-    syncPendingAlert();
+    // Retry Sync Pending Alerts
+    if (nowOnline) {
+      syncPendingAlert();
+    }
   }
-}
-
 
   useEffect(() => {
     handleInternetStatus();
@@ -179,12 +181,35 @@ function handleInternetStatus() {
           <b>{internetStatus}</b>
         </span>
       </p>
+
+      {/* ✅ MESSAGE INPUT FIELD */}
+      <div style={{ marginBottom: "15px" }}>
+        <label htmlFor="messageInput"><b>Message:</b></label>
+        <input
+          id="messageInput"
+          type="text"
+          placeholder="Enter your message (default: HELP)"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          style={{
+            width: "90%",
+            padding: "10px",
+            marginTop: "8px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+            fontSize: "16px",
+          }}
+        />
+      </div>
+
       {/* Send Help Request Button */}
       <button className="helpButton" onClick={sendHelpRequest}>
         Send Help
       </button>
+
       {/* Store Location in Local Storage Button */}
       <button onClick={handleShareLocation}>Store Information</button>
+
       {coords && !coords.error && (
         <p>
           Last known Coordinates - Latitude: {coords.latitude}, Longitude:{" "}
@@ -192,6 +217,7 @@ function handleInternetStatus() {
         </p>
       )}
       {coords?.error && <p>Error: {coords.error}</p>}
+
       {/* View Alerts */}
       <button className="viewButton" onClick={() => navigate("/reports")}>
         View Alert
