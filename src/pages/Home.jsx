@@ -113,8 +113,14 @@ function Home() {
 
         if (user) {
           const dataToSave = {
-            uid: user.uid,
-            coords: newCoords,
+                user: user
+                  ? user.isAnonymous
+                    ? `Guest (Temporary ID: ${user.uid})`
+                    : user.email
+                  : "Unknown User",
+                coords: coords || { error: "No location shared" },
+                message: "HELP",
+                time: new Date().toISOString(),
           };
           localStorage.setItem("lastLocation", JSON.stringify(dataToSave));
         }
@@ -178,7 +184,7 @@ function handleInternetStatus() {
         Send Help
       </button>
       {/* Store Location in Local Storage Button */}
-      <button onClick={handleShareLocation}>Store My Location</button>
+      <button onClick={handleShareLocation}>Store Information</button>
       {coords && !coords.error && (
         <p>
           Last known Coordinates - Latitude: {coords.latitude}, Longitude:{" "}
