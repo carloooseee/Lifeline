@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, collection, addDoc } from "firebase/firestore"; 
+import { getFirestore, collection, addDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { app } from "../firebase";
 import "../styles/home.css";
@@ -10,6 +10,7 @@ const db = getFirestore(app);
 function Home() {
   const [user, setUser] = useState(null);
   const [coords, setCoords] = useState(null);
+  const [storedInfo, setStoredInfo] = useState(null);
   const [internetStatus, setInternetStatus] = useState(
     navigator.onLine ? "Online" : "Offline"
   );
@@ -17,7 +18,7 @@ function Home() {
   const navigate = useNavigate();
   const auth = getAuth(app);
 
-  // Auth + load last saved location
+  // Load user + last saved location
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -31,24 +32,26 @@ function Home() {
       }
     });
 
-    // Load from localStorage
+    loadStoredInfo();
+
+    return () => unsubscribe();
+  }, [auth]);
+
+  // Function to load stored info
+  const loadStoredInfo = () => {
     const savedData = localStorage.getItem("lastLocation");
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
-        if (parsed.coords) {
-          setCoords(parsed.coords);
-        }
-        if (parsed.uid && !user) {
-          setUser({ uid: parsed.uid });
-        }
+        setStoredInfo(parsed);
+        if (parsed.coords) setCoords(parsed.coords);
       } catch (err) {
         console.error("Error parsing lastLocation:", err);
       }
+    } else {
+      setStoredInfo(null);
     }
-
-    return () => unsubscribe();
-  }, [auth]);
+  };
 
   // Help Request Button
   const sendHelpRequest = async () => {
@@ -93,6 +96,7 @@ function Home() {
     }
   };
 
+  // Sync pending alert when back online
   const syncPendingAlert = async () => {
     const pending = localStorage.getItem("pendingAlert");
     if (pending && navigator.onLine) {
@@ -107,7 +111,7 @@ function Home() {
     }
   };
 
-  // Share Location Button
+  // Store location manually
   const handleShareLocation = () => {
     const finalMessage = message.trim() === "" ? "HELP" : message.trim();
     navigator.geolocation.getCurrentPosition(
@@ -116,19 +120,19 @@ function Home() {
         const newCoords = { latitude, longitude };
         setCoords(newCoords);
 
-        if (user) {
-          const dataToSave = {
-            user: user
-              ? user.isAnonymous
-                ? `Guest (Temporary ID: ${user.uid})`
-                : user.email
-              : "Unknown User",
-            coords: coords || { error: "No location shared" },
-            message: finalMessage,
-            time: new Date().toISOString(),
-          };
-          localStorage.setItem("lastLocation", JSON.stringify(dataToSave));
-        }
+        const dataToSave = {
+          user: user
+            ? user.isAnonymous
+              ? `Guest (Temporary ID: ${user.uid})`
+              : user.email
+            : "Unknown User",
+          coords: newCoords,
+          message: finalMessage,
+          time: new Date().toISOString(),
+        };
+
+        localStorage.setItem("lastLocation", JSON.stringify(dataToSave));
+        setStoredInfo(dataToSave);
       },
       (err) => {
         console.error(err.message);
@@ -137,22 +141,18 @@ function Home() {
     );
   };
 
-  // Online/offline status
+  // Internet status handler
   function handleInternetStatus() {
     const nowOnline = navigator.onLine;
     setInternetStatus(nowOnline ? "Online" : "Offline");
 
-    // Retry Sync Pending Alerts
-    if (nowOnline) {
-      syncPendingAlert();
-    }
+    if (nowOnline) syncPendingAlert();
   }
 
   useEffect(() => {
     handleInternetStatus();
     window.addEventListener("online", handleInternetStatus);
     window.addEventListener("offline", handleInternetStatus);
-
     return () => {
       window.removeEventListener("online", handleInternetStatus);
       window.removeEventListener("offline", handleInternetStatus);
@@ -162,6 +162,7 @@ function Home() {
   return (
     <div className="Home">
       <h1>Welcome to Lifeline!</h1>
+
       {user ? (
         <p>
           Welcome{" "}
@@ -175,14 +176,11 @@ function Home() {
 
       <p>
         Status:{" "}
-        <span
-          style={{ color: internetStatus === "Online" ? "#6baf26" : "red" }}
-        >
+        <span style={{ color: internetStatus === "Online" ? "#6baf26" : "red" }}>
           <b>{internetStatus}</b>
         </span>
       </p>
-      
-      {/* Message Input */}
+
       <div style={{ marginBottom: "15px" }}>
         <label htmlFor="messageInput"><b>Message:</b></label>
         <input
@@ -202,23 +200,50 @@ function Home() {
         />
       </div>
 
-      {/* Send Help Request Button */}
+      {/* Send Help Button */}
       <button className="helpButton" onClick={sendHelpRequest}>
         Send Help
       </button>
 
-      {/* Store Location in Local Storage Button */}
-      <button onClick={handleShareLocation}>Store Information</button>
+      {/* Store Information Button */}
+      <button className="storeButton" onClick={handleShareLocation}>Store Information</button>
 
-      {coords && !coords.error && (
-        <p>
-          Last known Coordinates - Latitude: {coords.latitude}, Longitude:{" "}
-          {coords.longitude}
-        </p>
-      )}
-      {coords?.error && <p>Error: {coords.error}</p>}
+      {/* Stored Info Display */}
+      {(() => {
 
-      {/* View Alerts */}
+        const savedData = localStorage.getItem("lastLocation");
+        let storedCoords = null;
+
+        if (savedData) {
+          try {
+            const parsed = JSON.parse(savedData);
+            if (parsed.coords) storedCoords = parsed.coords;
+          } catch (err) {
+            console.error("Error parsing lastLocation:", err);
+          }
+        }
+
+        if (coords && !coords.error) {
+          return (
+            <p>
+              Last known Coordinates — Latitude: {coords.latitude}, Longitude:{" "}
+              {coords.longitude}
+            </p>
+          );
+        } else if (storedCoords) {
+          return (
+            <p>
+              Last stored Coordinates — Latitude: {storedCoords.latitude}, Longitude:{" "}
+              {storedCoords.longitude}
+            </p>
+          );
+        } else if (coords?.error) {
+          return <p>Error: {coords.error}</p>;
+        } else {
+          return <p>No stored info yet.</p>;
+        }
+      })()}
+
       <button className="viewMapButton" onClick={() => navigate("/reports")}>
         View Alert
       </button>

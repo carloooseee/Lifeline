@@ -20,7 +20,7 @@ function RecenterMap({ coords }) {
   const map = useMap();
   useEffect(() => {
     if (coords) {
-      map.setView([coords.latitude, coords.longitude], 13);
+      map.setView([coords.latitude, coords.longitude], 15);
     }
   }, [coords, map]);
   return null;
@@ -39,11 +39,12 @@ function MapView({ alerts }) {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
             };
+            // ✅ only set state — don’t write to localStorage
             setCurrentPosition(coords);
-            localStorage.setItem("lastLocation", JSON.stringify(coords));
           },
           (error) => {
             console.warn("Could not get current position:", error.message);
+            // ✅ read only
             const stored = localStorage.getItem("lastLocation");
             if (stored) {
               setCurrentPosition(JSON.parse(stored));
@@ -73,7 +74,7 @@ function MapView({ alerts }) {
   return (
     <MapContainer
       center={defaultCenter}
-      zoom={12}
+      zoom={25}
       style={{ height: "100%", width: "100%" }}
     >
       <TileLayer
