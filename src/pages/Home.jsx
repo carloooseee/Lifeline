@@ -81,7 +81,7 @@ function Home() {
       try {
         await addDoc(collection(db, "Alerts"), alertData);
         alert(`Help request sent! (${finalMessage})`);
-        setMessage(""); // ✅ clear after sending
+        setMessage("");
       } catch (err) {
         console.error("Error writing to Firestore:", err);
         localStorage.setItem("pendingAlert", JSON.stringify(alertData));
@@ -181,8 +181,8 @@ function Home() {
           <b>{internetStatus}</b>
         </span>
       </p>
-
-      {/* ✅ MESSAGE INPUT FIELD */}
+      
+      {/* Message Input */}
       <div style={{ marginBottom: "15px" }}>
         <label htmlFor="messageInput"><b>Message:</b></label>
         <input
@@ -219,7 +219,7 @@ function Home() {
       {coords?.error && <p>Error: {coords.error}</p>}
 
       {/* View Alerts */}
-      <button className="viewButton" onClick={() => navigate("/reports")}>
+      <button className="viewMapButton" onClick={() => navigate("/reports")}>
         View Alert
       </button>
       <a className="logoutButton" onClick={() => navigate("/")}>log out</a>

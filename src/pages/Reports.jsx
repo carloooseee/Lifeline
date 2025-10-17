@@ -3,11 +3,12 @@ import { collection, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import MapView from "../components/MapView";
-import "../styles/report.css"; 
+import "../styles/report.css";
 
 function History() {
   const [alerts, setAlerts] = useState([]);
   const [filter, setFilter] = useState("all");
+  const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,43 +50,71 @@ function History() {
   };
 
   return (
-    <div className="area">
-      <h1>Alert History</h1>
-      <div className="filter">
-        <button onClick={() => setFilter("all")}>All</button>
-        <button onClick={() => setFilter("24h")}>Last 24 Hours</button>
-        <button onClick={() => setFilter("7d")}>Last 7 Days</button>
+    <div className="history-page">
+      {/* Fullscreen map as background */}
+      <div className="map-container">
+        <MapView alerts={filterAlerts(alerts)} />
       </div>
 
-      {/* Alerts list*/}
-      <div className="alertBox">
-        {filterAlerts(alerts).length === 0 ? (
-          <p>No alerts found</p>
-        ) : (
-          <ol>
-            {filterAlerts(alerts).map((alert, index) => (
-              <li key={alert.id}>
-                <strong>{alert.message}</strong>
-                <div className="details">
-                  From: {alert.user} <br />
-                  Location: {alert.coords.latitude}, {alert.coords.longitude} <br />
-                  Time:{" "}
-                  {alert.time
-                    ? alert.time.toLocaleString()
-                    : "No time provided"}
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
+      {/* Overlay for buttons */}
+      <div className="ui-overlay">
+        <div className="top-buttons">
+          <button className="viewButton" onClick={() => navigate("/home")}>
+            Go Back
+          </button>
+          <button className="viewButton" onClick={() => setShowPopup(true)}>
+            Alert History
+          </button>
+        </div>
       </div>
 
-      {/* Show pins on map */}
-      <MapView alerts={filterAlerts(alerts)} />
+      {/* Popup modal */}
+      {showPopup && (
+        <div className="popup-overlay" onClick={() => setShowPopup(false)}>
+          <div
+            className="popup-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2>Alert History</h2>
 
-      <button className="viewButton" onClick={() => navigate("/home")}>
-        Go back
-      </button>
+            <div className="filter">
+              <button onClick={() => setFilter("all")}>All</button>
+              <button onClick={() => setFilter("24h")}>Last 24 Hours</button>
+              <button onClick={() => setFilter("7d")}>Last 7 Days</button>
+            </div>
+
+            <div className="alertBox">
+              {filterAlerts(alerts).length === 0 ? (
+                <p>No alerts found</p>
+              ) : (
+                <ol>
+                  {filterAlerts(alerts).map((alert) => (
+                    <li key={alert.id}>
+                      <strong>{alert.message}</strong>
+                      <div className="details">
+                        From: {alert.user} <br />
+                        Location: {alert.coords.latitude},{" "}
+                        {alert.coords.longitude} <br />
+                        Time:{" "}
+                        {alert.time
+                          ? alert.time.toLocaleString()
+                          : "No time provided"}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+
+            <button
+              className="closeButton"
+              onClick={() => setShowPopup(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
