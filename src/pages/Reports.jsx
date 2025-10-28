@@ -1,9 +1,11 @@
+// src/pages/Reports.jsx
+
 import React, { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { db } from "../firebase";
-import MapView from "../components/MapView";
-import "../styles/report.css";
+import { db } from "../firebase"; // Make sure this path is correct
+import MapView from "../components/MapView"; // Make sure this path is correct
+import "../styles/report.css"; // Make sure this path is correct
 
 function History() {
   const [alerts, setAlerts] = useState([]);
@@ -34,6 +36,7 @@ function History() {
     fetchAlerts();
   }, []);
 
+  // --- Filter Function ---
   const filterAlerts = (alerts) => {
     if (filter === "all") return alerts;
 
@@ -68,53 +71,73 @@ function History() {
         </div>
       </div>
 
-      {/* Popup modal */}
-      {showPopup && (
-        <div className="popup-overlay" onClick={() => setShowPopup(false)}>
-          <div
-            className="popup-content"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2>Alert History</h2>
+      {/* --- UPDATED POPUP MODAL --- */}
+      {/* We use a className toggle for animations */}
+      <div
+        className={`popup-overlay ${showPopup ? "active" : ""}`}
+        onClick={() => setShowPopup(false)}
+      >
+        <div
+          className="popup-content"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2>Alert History</h2>
 
-            <div className="filter">
-              <button onClick={() => setFilter("all")}>All</button>
-              <button onClick={() => setFilter("24h")}>Last 24 Hours</button>
-              <button onClick={() => setFilter("7d")}>Last 7 Days</button>
-            </div>
-
-            <div className="alertBox">
-              {filterAlerts(alerts).length === 0 ? (
-                <p>No alerts found</p>
-              ) : (
-                <ol>
-                  {filterAlerts(alerts).map((alert) => (
-                    <li key={alert.id}>
-                      <strong>{alert.message}</strong>
-                      <div className="details">
-                        From: {alert.user} <br />
-                        Location: {alert.coords.latitude},{" "}
-                        {alert.coords.longitude} <br />
-                        Time:{" "}
-                        {alert.time
-                          ? alert.time.toLocaleString()
-                          : "No time provided"}
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
-
+          {/* --- Filter Buttons --- */}
+          <div className="filter">
             <button
-              className="closeButton"
-              onClick={() => setShowPopup(false)}
+              className={filter === "all" ? "active" : ""}
+              onClick={() => setFilter("all")}
             >
-              Close
+              All
+            </button>
+            <button
+              className={filter === "24h" ? "active" : ""}
+              onClick={() => setFilter("24h")}
+            >
+              Last 24 Hours
+            </button>
+            <button
+              className={filter === "7d" ? "active" : ""}
+              onClick={() => setFilter("7d")}
+            >
+              Last 7 Days
             </button>
           </div>
+          {/* --- End of Filter Buttons --- */}
+
+          <div className="alertBox">
+            {filterAlerts(alerts).length === 0 ? (
+              <p>No alerts found</p>
+            ) : (
+              <ol>
+                {filterAlerts(alerts).map((alert) => (
+                  <li key={alert.id}>
+                    <strong>{alert.message}</strong>
+                    <div className="details">
+                      From: {alert.user} <br />
+                      Location: {alert.coords.latitude},{" "}
+                      {alert.coords.longitude} <br />
+                      Time:{" "}
+                      {alert.time
+                        ? alert.time.toLocaleString()
+                        : "No time provided"}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+
+          <button
+            className="closeButton"
+            onClick={() => setShowPopup(false)}
+          >
+            Close
+          </button>
         </div>
-      )}
+      </div>
+      {/* --- END OF POPUP --- */}
     </div>
   );
 }

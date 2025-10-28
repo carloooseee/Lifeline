@@ -1,38 +1,185 @@
-.Home{
-    height: 100vh;
-    width: 100vw;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
+/* --- Main Color na gagamiten --- */
+:root {
+  --eas-red: rgb(203, 0, 0);
+  --eas-red-dark: rgb(180, 0, 0);
+  --eas-blue: rgb(0, 55, 157);
+  --eas-blue-dark: rgb(0, 40, 120);
+  --eas-light-gray: #eef0f2;
+  --eas-light-gray-hover: #dfe2e5;
+  --eas-text: #212121;
+  --eas-text-light: #333;
+  --eas-border: #ccc;
+  --eas-bg-light: #f9f9f9;
+  --eas-bg-white: #ffffff;
+  --eas-online: #28a745;
+}
+body {
+  margin: 0;
+  padding: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  /* background-image: url("https://media.istockphoto.com/photos/preparedness-for-fire-drill-picture-id902902192?k=6&m=902902192&s=612x612&w=0&h=g23Dyjs-AVZdVNjdrQlzwYKRmkUAKmEMcZWmAnXrAxk=");
+  background-size: cover; 
+  background-position: center;
+  background-repeat: no-repeat; 
+  background-attachment: fixed;  */
+  background-color: var(--eas-bg-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+/* --- Main Container Styling (Mobile-First) --- */
+.Home {
+  width: 100%;
+  max-width: 800px;
+  padding: 1rem;
+  box-sizing: border-box;
+  background-color: var(--eas-bg-white);
+  color: var(--eas-text);
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.Home p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
 }
 
-.Home *{
-    margin-bottom: 10px;
+.home-header {
+  text-align: center;
+  margin-bottom: 1.5rem; 
 }
-.helpButton{
-    background-color: rgb(203, 0, 0);
-    color: white;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 10px;
+
+.status-text {
+  font-weight: 600;
 }
-.storeButton{
-    background-color: rgb(0, 55, 157);
-    color: rgb(255, 255, 255);
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 10px;
+.Home h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--eas-text-light);
 }
-.viewMapButton{
-    background-color: rgb(255, 255, 255);
-    border-radius: 10px;
-    border: 1px solid black;
-    color: rgb(0, 0, 0);
-    padding: 10px 20px;
-    cursor: pointer;
+
+.Home p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
 }
-.logoutButton{
-    color: rgb(255, 0, 0);
-    cursor: pointer;
+
+/* --- Status Indicator --- */
+.status-text {
+  font-weight: 600;
+}
+.status-indicator {
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.9rem;
+  margin-left: 4px;
+}
+.status-online {
+  background-color: var(--eas-online);
+}
+.status-offline {
+  background-color: var(--eas-red);
+}
+
+/* --- Message Input Group --- */
+.message-group {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+.message-group label {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+.message-input {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--eas-border);
+  background-color: var(--eas-bg-light);
+  box-sizing: border-box;
+}
+.message-input:focus {
+  outline: none;
+  border-color: var(--eas-blue);
+  box-shadow: 0 0 0 3px rgba(0, 55, 157, 0.15);
+}
+
+/* --- Button Styling --- */
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn-help {
+  background-color: var(--eas-red);
+  color: white;
+}
+.btn-help:hover {
+  background-color: var(--eas-red-dark);
+  color: white;
+}
+.btn-store {
+  background-color: var(--eas-blue);
+  color: rgb(255, 255, 255);
+}
+.btn-store:hover{
+  background-color: var(--eas-blue-dark);
+  color: rgb(255, 255, 255);
+}
+.btn-map {
+  background-color: var(--eas-light-gray);
+  color: rgb(0, 0, 0);
+}
+.btn-map:hover {
+  background-color: var(--eas-light-gray-hover);
+  color: rgb(0, 0, 0);
+}
+.btn-logout {
+  background-color: var(--eas-light-gray);
+  color: var(--eas-text);
+}
+.btn-logout:hover {
+  background-color: var(--eas-red);
+  color: white;
+}
+/* --- Media Queries for Larger Screens --- */
+@media (min-width: 600px) {
+  body {
+    justify-content: center;
+  }
+
+  .Home {
+  
+    padding: 2rem 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .Home h1 {
+    font-size: 2.25rem;
+  }
 }
