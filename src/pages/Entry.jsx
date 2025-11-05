@@ -5,8 +5,7 @@ export default function Entry() {
   return (
     <div className="area">
       <div className="area-box">
-        <h1 className="title">Welcome to Lifeline</h1>
-        
+
         {/* Login Component */}
         <Login />
 
