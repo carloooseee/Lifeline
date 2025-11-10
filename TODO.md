@@ -1,4 +1,7 @@
-# TODO: Fix Sign In Button on Signup Page
+# TODO: Merge Sign In Feature from Carlo's Repo
 
-- [x] Import Link from react-router-dom in signup.jsx
-- [x] Replace the <a href="/Login"> with <Link to="/"> to navigate to the login page (which is at "/")
+- [x] Integrate signup functionality into existing Login component
+- [x] Update Login.jsx to toggle between login and signup modes
+- [x] Remove separate Signup component and route
+- [x] Test the sign in and sign up functionality
+- [x] Ensure local login state is preserved (no changes to firebase auth)
