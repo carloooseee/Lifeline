@@ -1,0 +1,235 @@
+/* src/styles/report.css */
+
+/* --- CSS Variables (from your project) --- */
+:root {
+  --eas-red: rgb(203, 0, 0);
+  --eas-red-dark: rgb(180, 0, 0);
+  --eas-blue: rgb(0, 55, 157);
+  --eas-blue-dark: rgb(0, 40, 120);
+  --eas-scroll: rgb(160, 160, 160);
+  --eas-bg-white: #ffffff;
+  --eas-text: #212121;
+  --eas-border: #ccc;
+  --eas-bg-light: #f9f9f9;
+}
+
+/* --- Page & Map Container --- */
+.history-page {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; /* Prevents scrollbars */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.map-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* Lowest layer */
+}
+
+/* --- Leaflet Map Specific --- */
+.map-container .leaflet-container {
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+/* --- UI Overlay (for top buttons) --- */
+.ui-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem;
+  z-index: 1000; /* Sits above the map */
+  box-sizing: border-box;
+
+  /* This pushes the child .top-buttons div to the right */
+  display: flex;
+  justify-content: flex-end;
+}
+
+.top-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* --- Google Maps-style Buttons --- */
+.viewButton {
+  background-color: var(--eas-bg-white);
+  color: var(--eas-text);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s ease;
+}
+
+.viewButton:hover {
+  background-color: var(--eas-bg-light);
+}
+
+/* --- Popup Backdrop --- */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+  z-index: 2000; /* Highest layer */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  box-sizing: border-box;
+
+  /* For Animation */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Active state for popup (makes it visible) */
+.popup-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* --- Popup Content Card --- */
+.popup-content {
+  background-color: var(--eas-bg-white);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh; /* Prevents modal from being too tall */
+  display: flex;
+  flex-direction: column;
+
+  /* For "Pop" Animation */
+  transform: scale(0.95);
+  transition: transform 0.3s ease;
+}
+
+/* Active state for content (makes it "pop" in) */
+.popup-overlay.active .popup-content {
+  transform: scale(1);
+}
+
+.popup-content h2 {
+  margin: 0 0 1rem 0;
+  text-align: center;
+  color: var(--eas-text);
+}
+
+/* --- Filter Buttons --- */
+.filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter button {
+  flex-grow: 1;
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--eas-border);
+  background-color: var(--eas-bg-light);
+  color: #333;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.filter button:hover {
+  background-color: #e0e0e0;
+}
+
+.filter button.active {
+  background-color: var(--eas-blue);
+  color: white;
+  border-color: var(--eas-blue);
+  font-weight: 600;
+}
+
+/* --- Alert List Styling --- */
+.alertBox {
+  flex-grow: 1;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #fdfdfd;
+
+  /* --- Custom Scrollbar Styles (Webkit) --- */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: var(--eas-bg-light);
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--eas-scroll);
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--eas-scroll);
+  }
+}
+
+.alertBox ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.alertBox li {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+.alertBox li:last-child {
+  border-bottom: none;
+}
+
+.alertBox .details {
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+}
+
+.alertBox p {
+  padding: 1rem;
+  text-align: center;
+  color: #777;
+}
+
+/* --- Close Button --- */
+.closeButton {
+  margin-top: 1rem;
+  background-color: var(--eas-border);
+  color: rgb(0, 0, 0);
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.closeButton:hover {
+  background-color: var(--eas-red-dark);
+  color: rgb(255, 255, 255);
+}
