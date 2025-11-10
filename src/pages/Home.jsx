@@ -131,6 +131,8 @@ const processPendingAlert = async (currentUser) => { // <-- NOTE currentUser ARG
         coords: locationData,
         message: finalMessage,
         time: new Date().toISOString(),
+        category: "not available",
+        urgency_level: "not available",
       };
 
       if (navigator.onLine) {

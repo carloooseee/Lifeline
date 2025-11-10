@@ -25,6 +25,8 @@ function History() {
             user: data.user || "Unknown",
             coords: data.coords || {},
             time: data.time ? new Date(data.time) : null,
+            category: data.category || "not available",
+            urgency_level: data.urgency_level || "not available",
           };
         });
         setAlerts(alertsData);
@@ -115,6 +117,8 @@ function History() {
                   <li key={alert.id}>
                     <strong>{alert.message}</strong>
                     <div className="details">
+                      Category: {alert.category} <br />
+                      Urgency Level: {alert.urgency_level}<br />
                       From: {alert.user} <br />
                       Location: {alert.coords.latitude},{" "}
                       {alert.coords.longitude} <br />
