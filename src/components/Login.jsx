@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { getAuth, signInWithEmailAndPassword, signInAnonymously } from "firebase/auth";
 import { app } from "../firebase"; // make sure firebase.js exports `app`
 import '../styles/login.css'
@@ -78,7 +78,7 @@ export default function Login() {
             Sign in with Google
           </button>
         </form>
-        <p className="signup-link">Don’t have an account? <a href="#">Sign up now</a></p>
+        <p className="signup-link">Don’t have an account? <Link to="/signup">Sign up now</Link></p>
       </div>
     </div>
   );
