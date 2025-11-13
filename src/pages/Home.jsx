@@ -191,7 +191,21 @@ const processPendingAlert = async (currentUser) => { // <-- NOTE currentUser ARG
 
   return (
     <div className="home-page-wrapper">
+      <div className="logo home-logo">
+        <h1>
+          <span className="life">Life</span>
+          <span className="line">Line</span>
+        </h1>
+        <p>Emergency Alert System</p>
+      </div>
       <div className="Home">
+        <div className="logo home-logo-mobile">
+          <h1>
+            <span className="life">Life</span>
+            <span className="line">Line</span>
+          </h1>
+          <p>Emergency Alert System</p>
+        </div>
         
         <div className="home-header">
           <h1>Welcome to Lifeline!</h1>

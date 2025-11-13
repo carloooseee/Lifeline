@@ -1,186 +1,358 @@
-/* --- Main Color na gagamiten --- */
 :root {
-  --eas-red: rgb(203, 0, 0);
-  --eas-red-dark: rgb(180, 0, 0);
-  --eas-blue: rgb(0, 55, 157);
-  --eas-blue-dark: rgb(0, 40, 120);
-  --eas-light-gray: #eef0f2;
-  --eas-light-gray-hover: #dfe2e5;
-  --eas-text: #212121;
-  --eas-text-light: #333;
-  --eas-border: #ccc;
-  --eas-bg-light: #f9f9f9;
-  --eas-bg-white: #ffffff;
-  --eas-online: #28a745;
+  --home-red: #cb0000;
+  --home-blue: #00379d;
+  --home-blue-dark: #002878;
+  --home-light: #f5f5f5;
+  --home-text: #333333;
+  --home-border: #000000;
+  --home-online: #28a745;
 }
+
 body {
   margin: 0;
-  padding: none;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
-  /* background-image: url("https://media.istockphoto.com/photos/preparedness-for-fire-drill-picture-id902902192?k=6&m=902902192&s=612x612&w=0&h=g23Dyjs-AVZdVNjdrQlzwYKRmkUAKmEMcZWmAnXrAxk=");
-  background-size: cover; 
-  background-position: center;
-  background-repeat: no-repeat; 
-  background-attachment: fixed;  */
-  background-color: var(--eas-bg-light);
+}
+
+.home-logo {
+  position: absolute;
+  top: 2.25rem;
+  left: 2.25rem;
+  z-index: 2;
+}
+
+.home-logo h1 {
+  font-size: clamp(3rem, 6vw, 6.5rem);
+  font-weight: 600;
+  margin: 0;
+}
+
+.home-logo p {
+  font-size: clamp(1.375rem, 2.1vw, 2.25rem);
+  font-weight: 550;
+  color: #000000;
+  margin: 0.25rem 0 0;
+  text-shadow: 2px 2px rgb(176, 176, 176);
+  line-height: 0.95;
+}
+
+.life {
+  color: var(--home-red);
+}
+
+.line {
+  color: var(--home-blue);
+}
+
+.home-logo-mobile h1 {
+  font-size: clamp(4rem, 13vw, 6.25rem);
+  font-weight: 600;
+  margin: 0;
+}
+
+.home-logo-mobile p {
+  font-size: clamp(1rem, 2.5vw, 1.375rem);
+  font-weight: 550;
+  color: #000000;
+  margin: 0.15rem 0 0;
+  text-shadow: none;
+  line-height: 0.95;
+}
+
+.home-page-wrapper {
+  position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   width: 100%;
   min-height: 100vh;
-  box-sizing: border-box;
+  padding: 3rem 1.5rem;
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(to right, #f5f5f5 0%, #ffffff 100%);
+  overflow: hidden;
 }
-/* --- Main Container Styling (Mobile-First) --- */
+
+.home-page-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.45;
+}
+
 .Home {
-  width: 100%;
-  max-width: 800px;
-  padding: 1rem;
-  box-sizing: border-box;
-  background-color: var(--eas-bg-white);
-  color: var(--eas-text);
+  position: relative;
+  z-index: 1;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  align-items: flex-start;
+  gap: 1.5rem;
+  width: 43.75rem;
+  max-width: 90vw;
+  padding: 3.75rem 3.125rem;
+  background-color: #ffffff;
+  border-radius: 2.1875rem;
+  border: 3px solid var(--home-border);
+  box-shadow: 1.0625rem 1.0625rem 0 rgba(0, 0, 0, 1);
+  color: var(--home-text);
+  box-sizing: border-box;
 }
-.Home p {
-  font-size: 1rem;
-  line-height: 1.6;
-  margin-bottom: 1rem;
+
+.home-logo-mobile {
+  display: none;
 }
 
 .home-header {
-  text-align: center;
-  margin-bottom: 1.5rem; 
+  width: 100%;
+}
+
+.home-header h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+}
+
+.home-header p {
+  font-size: 1.125rem;
+  margin: 0.25rem 0;
+  color: #555555;
 }
 
 .status-text {
   font-weight: 600;
-}
-.Home h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: var(--eas-text-light);
+  color: var(--home-text);
 }
 
-.Home p {
-  font-size: 1rem;
-  line-height: 1.6;
-  margin-bottom: 1rem;
-}
-
-/* --- Status Indicator --- */
-.status-text {
-  font-weight: 600;
-}
 .status-indicator {
-  padding: 3px 8px;
-  border-radius: 6px;
-  color: white;
-  font-size: 0.9rem;
-  margin-left: 4px;
-}
-.status-online {
-  background-color: var(--eas-online);
-}
-.status-offline {
-  background-color: var(--eas-red);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-left: 0.5rem;
 }
 
-/* --- Message Input Group --- */
+.status-online {
+  background-color: var(--home-online);
+}
+
+.status-offline {
+  background-color: var(--home-red);
+}
+
 .message-group {
-  margin-bottom: 1.5rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
-}
-.message-group label {
-  font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 8px;
-}
-.message-input {
-  width: 100%;
-  padding: 12px;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--eas-border);
-  background-color: var(--eas-bg-light);
-  box-sizing: border-box;
-  color: black;
-}
-.message-input:focus {
-  outline: none;
-  border-color: var(--eas-blue);
-  box-shadow: 0 0 0 3px rgba(0, 55, 157, 0.15);
+  gap: 0.75rem;
 }
 
-/* --- Button Styling --- */
-.btn {
-  display: block;
-  width: 100%;
-  padding: 14px;
-  margin-bottom: 12px;
-  font-size: 1rem;
+.message-group label {
+  font-size: 1.125rem;
   font-weight: 600;
-  border-radius: 8px;
+  color: var(--home-text);
+}
+
+.message-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-size: 1.125rem;
+  border-radius: 0.6875rem;
+  border: 1px solid #dddddd;
+  background-color: #f2f2f2;
+  color: #000000;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.message-input:focus {
+  outline: none;
+  border-color: var(--home-blue);
+  box-shadow: 0 0 0 3px rgba(0, 55, 157, 0.2);
+}
+
+.btn {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 0.6875rem;
   border: none;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-  text-align: center;
-  text-decoration: none;
-  box-sizing: border-box;
+  transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.1s ease;
+  color: #ffffff;
 }
-.btn:active {
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.btn:not(:disabled):active {
   transform: scale(0.98);
 }
+
 .btn-help {
-  background-color: var(--eas-red);
-  color: white;
+  background-color: var(--home-red);
 }
-.btn-help:hover {
-  background-color: var(--eas-red-dark);
-  color: white;
+
+.btn-help:not(:disabled):hover {
+  background-color: #b80000;
+  color: #ffe6e6;
 }
+
 .btn-store {
-  background-color: var(--eas-blue);
-  color: rgb(255, 255, 255);
+  background-color: var(--home-blue);
 }
-.btn-store:hover{
-  background-color: var(--eas-blue-dark);
-  color: rgb(255, 255, 255);
+
+.btn-store:not(:disabled):hover {
+  background-color: var(--home-blue-dark);
+  color: #e6f0ff;
 }
+
 .btn-map {
-  background-color: var(--eas-light-gray);
-  color: rgb(0, 0, 0);
+  background-color: #f2f2f2;
+  color: #000000;
+  border: 1px solid #000000;
 }
-.btn-map:hover {
-  background-color: var(--eas-light-gray-hover);
-  color: rgb(0, 0, 0);
+
+.btn-map:not(:disabled):hover {
+  background-color: #e6e6e6;
+  color: #000000;
 }
+
 .btn-logout {
-  background-color: var(--eas-light-gray);
-  color: var(--eas-text);
+  background-color: #000000;
+  color: #ffffff;
 }
-.btn-logout:hover {
-  background-color: var(--eas-light-gray-hover);
-  color: rgb(0, 0, 0);
+
+.btn-logout:not(:disabled):hover {
+  background-color: #111111;
+  color: #ffffff;
 }
-/* --- Media Queries for Larger Screens --- */
-@media (min-width: 600px) {
-  body {
-    justify-content: center;
+
+.btn-logout {
+  text-align: center;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.location-display {
+  width: 100%;
+  padding: 1.25rem;
+  background-color: #f9f9f9;
+  border-radius: 0.9375rem;
+  border: 1px solid #e5e5e5;
+  color: var(--home-text);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.location-display p {
+  margin: 0.5rem 0;
+}
+
+@media (max-width: 1200px) {
+  .Home {
+    width: 37.5rem;
+    padding: 2.75rem 2.25rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-logo {
+    display: none;
+  }
+
+  .home-logo-mobile {
+    display: block;
+    align-self: flex-start;
+    text-align: left;
+    margin: -0.5rem 0 1rem;
+  }
+
+  .home-logo-mobile p {
+    text-shadow: none;
   }
 
   .Home {
-  
-    padding: 2rem 1.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    align-items: stretch;
+    text-align: left;
+    padding: 1.25rem 1.8rem 2.5rem;
   }
 
-  .Home h1 {
-    font-size: 2.25rem;
+  .Home .message-group,
+  .Home .location-display {
+    text-align: left;
+  }
+
+  .home-page-wrapper {
+    padding: 3.5rem 1.25rem 2.5rem;
+  }
+
+  .home-page-wrapper::before {
+    opacity: 0.25;
+  }
+
+  .Home {
+    width: 90%;
+    max-width: 31.25rem;
+    box-shadow: 0.625rem 0.625rem 0 rgba(0, 0, 0, 1);
+  }
+
+  .home-header h1 {
+    font-size: 2.125rem;
+  }
+
+  .home-header p,
+  .message-group label,
+  .message-input,
+  .btn,
+  .location-display {
+    font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-page-wrapper::before {
+    background-image: url("/pictures/homemobile.png");
+  }
+}
+
+@media (max-width: 600px) {
+  .home-page-wrapper {
+    padding: 1.5rem 1rem 2rem;
+  }
+
+  .Home {
+    padding: 1.25rem 1.5rem 2.25rem;
+    border-radius: 1.5rem;
+  }
+
+  .home-header h1 {
+    font-size: 1.9rem;
+  }
+}
+
+@media (min-width: 901px) and (orientation: portrait) {
+  .home-page-wrapper::before {
+    background-image: url("/pictures/homemobile.png");
+  }
+
+  .Home {
+    padding-top: 1rem;
+  }
+}
+
+@media (min-width: 901px) and (orientation: landscape) {
+  .home-page-wrapper::before {
+    background-image: url("/pictures/home.png");
   }
 }
