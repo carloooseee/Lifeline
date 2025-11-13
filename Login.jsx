@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAuth, signInWithEmailAndPassword, signInAnonymously, createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signInAnonymously,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 import { app } from "../firebase"; // make sure firebase.js exports `app`
 import '../styles/login.css'
 
@@ -14,6 +21,20 @@ export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
   const auth = getAuth(app);
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      await signInWithPopup(auth, provider);
+      navigate("/home");
+    } catch (err) {
+      if (err?.code !== "auth/popup-closed-by-user") {
+        setError(err.message);
+      }
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -121,7 +142,7 @@ export default function Login() {
           {isLogin && (
             <>
               <button type="button" onClick={handleGuest} className="guest-btn">Continue as Guest</button>
-              <button type="button" className="google-btn">
+              <button type="button" onClick={handleGoogleLogin} className="google-btn">
                 <img src="/pictures/google-icon.png" alt="Google" />
                 Sign in with Google
               </button>
