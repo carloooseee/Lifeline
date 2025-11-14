@@ -1,203 +1,258 @@
 import * as tf from '@tensorflow/tfjs';
 
-// --- File Paths ---
-// 1. Naive Bayes (Urgency) Model
-const NB_MODEL_PATH = '/models/nb_urgency_model.json';
-// 2. LSTM (Category) Model
-const LSTM_MODEL_PATH = '/models/tfjs_category_model/model.json';
-// 3. LSTM (Category) Data (Tokenizer/Labels)
-const LSTM_DATA_PATH = '/models/lstm_category_data.json';
+// --- Model Asset Paths ---
+// (This assumes you will place your 4 JSON files in the 'public/' directory)
+const CATEGORY_MODEL_URL = '/model.json';
+const CATEGORY_TOKENIZER_URL = '/tokenizer_category.json';
+const URGENCY_MODEL_URL = '/urgency_nb.json';
+const URGENCY_VOCAB_URL = '/tfidf_vectorizer.json';
 
-
-// --- Global Storage ---
-let nbModelData = null;
-let lstmModel = null;
-let lstmData = null;
-
-// --- 1. NAIVE BAYES (URGENCY) FUNCTIONS ---
+// --- Constants ---
+const MAX_LEN_CATEGORY = 50; // From your model's input shape
 
 /**
- * Loads the Naive Bayes model parameters (vocabulary, weights)
+ * 🔴 CRITICAL: UPDATE THIS ARRAY 🔴
+ * Your category model ('model.json') outputs 10 categories (indices 0-9).
+ * You must replace these generic names with your actual category labels
+ * in the exact order they were in during training.
  */
-async function loadNBModel() {
-  if (nbModelData) return nbModelData;
+const CATEGORY_LABELS = [
+  'Category 0: Hurricane', 
+  'Category 1: Fire', 
+  'Category 2: Rescue/Trapped', 
+  'Category 3: Power Outage', 
+  'Category 4: Flood', 
+  'Category 5: Earthquake', 
+  'Category 6: Medical Emergency', 
+  'Category 7: Drought', 
+  'Category 8: Injury', 
+  'Category 9: Crime/Violence'
+  // (The names above are just logical guesses, you MUST update them)
+];
+
+
+// --- Cached ML Assets ---
+let categoryModel = null;
+let categoryWordIndex = null;
+let urgencyModel = null;
+let urgencyVocab = null;
+
+// --- Asset Loader Functions ---
+
+/**
+ * Loads and caches the Keras LSTM model and its tokenizer.
+ */
+async function loadCategoryAssets() {
+  if (categoryModel && categoryWordIndex) return;
+  
   try {
-    const response = await fetch(NB_MODEL_PATH);
-    nbModelData = await response.json();
-    console.log('✅ Naive Bayes (Urgency) model loaded.');
-    return nbModelData;
-  } catch (error) {
-    console.error('❌ Failed to load Naive Bayes model:', error);
-    return null;
+    // Load the model
+    categoryModel = await tf.loadLayersModel(CATEGORY_MODEL_URL);
+    
+    // Load the tokenizer word index
+    const tokenizerResponse = await fetch(CATEGORY_TOKENIZER_URL);
+    const tokenizerData = await tokenizerResponse.json();
+    // The word_index is stored as a JSON string within the main JSON config
+    categoryWordIndex = JSON.parse(tokenizerData.config.word_index); 
+    
+    console.log("Category ML assets loaded.");
+  } catch (err) {
+    console.error("Error loading category ML assets:", err);
+    throw new Error("Could not load category model.");
   }
 }
 
 /**
- * Preprocesses text for the Naive Bayes model (TF-IDF vector)
+ * Loads and caches the Naive Bayes model and its TF-IDF vocabulary.
  */
-function preprocessForNB(message, vocabulary, featureCount) {
-  // Use the same cleaning function from your notebook
-  const text = message.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
-  const tokens = text.split(' ');
-  const vector = new Array(featureCount).fill(0); // Create a zero vector
+async function loadUrgencyAssets() {
+  if (urgencyModel && urgencyVocab) return;
   
-  for (const token of tokens) {
-    if (vocabulary.hasOwnProperty(token)) {
-      // Use the index from the saved vocabulary
-      const index = vocabulary[token] - 1; // -1 because we added 1 in Python
-      if (index >= 0 && index < featureCount) {
-        vector[index] += 1; // Increment word count
-      }
-    }
+  try {
+    // Load the Naive Bayes model params
+    const modelResponse = await fetch(URGENCY_MODEL_URL);
+    urgencyModel = await modelResponse.json();
+    
+    // Load the TF-IDF vocabulary
+    const vocabResponse = await fetch(URGENCY_VOCAB_URL);
+    urgencyVocab = await vocabResponse.json();
+    
+    console.log("Urgency ML assets loaded.");
+  } catch (err) {
+    console.error("Error loading urgency ML assets:", err);
+    throw new Error("Could not load urgency model.");
   }
-  return vector;
 }
 
-/**
- * Runs the Naive Bayes model to predict Urgency
- */
-function classifyUrgencyNB(message) {
-  if (!nbModelData) return { urgency: "N/A", urgencyConfidence: 0 };
+// --- Pipeline 1: Category Prediction (TensorFlow.js) ---
 
-  const { vocabulary, log_likelihoods, log_priors, labels, tfidf_feature_count } = nbModelData;
+/**
+ * Processes raw text into a tokenized, padded sequence for the Keras model.
+ * @param {string} text - The user's input message.
+ * @returns {number[]} A sequence array of length MAX_LEN_CATEGORY.
+ */
+function processTextForCategory(text) {
+  // 1. Clean text (lowercase and remove punctuation based on tokenizer's filters)
+  const cleanText = text
+    .toLowerCase()
+    .replace(/[!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n]/g, ' ') // Replace with space
+    .trim();
+
+  // 2. Tokenize
+  const tokens = cleanText.split(' ').filter(Boolean); // Split by space and remove empty strings
   
-  // 1. Preprocess text into a word-count vector
-  const vector = preprocessForNB(message, vocabulary, tfidf_feature_count);
-  
-  // 2. Calculate scores (log-probabilities)
-  const scores = log_priors.map((class_log_prior, class_index) => {
-    let score = class_log_prior;
-    for (let word_index = 0; word_index < vector.length; word_index++) {
-      if (vector[word_index] > 0) {
-        score += log_likelihoods[class_index][word_index] * vector[word_index];
-      }
-    }
-    return score;
+  // 3. Convert tokens to integers using the word index
+  let sequence = tokens.map(token => {
+    return categoryWordIndex[token] || 1; // 1 is the <OOV> token index
   });
 
-  // 3. Convert scores to probabilities (Softmax)
+  // 4. Pad or Truncate the sequence
+  if (sequence.length > MAX_LEN_CATEGORY) {
+    // Truncate from the beginning (Keras default)
+    sequence = sequence.slice(sequence.length - MAX_LEN_CATEGORY); 
+  } else if (sequence.length < MAX_LEN_CATEGORY) {
+    // Pad with 0s at the beginning (Keras default)
+    const padding = Array(MAX_LEN_CATEGORY - sequence.length).fill(0);
+    sequence = padding.concat(sequence);
+  }
+  
+  return sequence;
+}
+
+/**
+ * Predicts the disaster category using the loaded LSTM model.
+ * @param {string} text - The user's input message.
+ * @returns {Promise<string>} The predicted category name.
+ */
+async function predictCategory(text) {
+  await loadCategoryAssets();
+  
+  const sequence = processTextForCategory(text);
+  const tensor = tf.tensor2d([sequence], [1, MAX_LEN_CATEGORY], 'int32');
+  
+  let predictionTensor;
+  try {
+    // Run prediction
+    predictionTensor = categoryModel.predict(tensor);
+    // Get the index of the highest probability
+    const categoryIndex = (await predictionTensor.argMax(1).data())[0];
+    
+    return CATEGORY_LABELS[categoryIndex] || "Unknown Category";
+  } finally {
+    // Clean up memory
+    tensor.dispose(); 
+    if (predictionTensor) predictionTensor.dispose();
+  }
+}
+
+// --- Pipeline 2: Urgency Prediction (Naive Bayes) ---
+
+/**
+ * Processes raw text into a list of vocab indices for the Naive Bayes model.
+ * @param {string} text - The user's input message.
+ * @returns {number[]} A list of indices corresponding to the urgency vocab.
+ */
+function processTextForUrgency(text) {
+  // 1. Clean text (lowercase, remove punctuation, consolidate whitespace)
+  const cleanText = text
+    .toLowerCase()
+    .replace(/[!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n]/g, ' ') 
+    .replace(/\s+/g, ' ')
+    .trim();
+    
+  const tokens = cleanText.split(' ');
+  const ngrams = new Set();
+
+  // 2. Get all unigrams (single words)
+  for (const token of tokens) {
+    if (urgencyVocab.hasOwnProperty(token)) {
+      ngrams.add(token);
+    }
+  }
+
+  // 3. Get all bigrams (two words)
+  for (let i = 0; i < tokens.length - 1; i++) {
+    const bigram = `${tokens[i]} ${tokens[i+1]}`;
+    if (urgencyVocab.hasOwnProperty(bigram)) {
+      ngrams.add(bigram);
+    }
+  }
+
+  // 4. Map the found ngrams to their indices
+  return Array.from(ngrams).map(ngram => urgencyVocab[ngram]);
+}
+
+/**
+ * Predicts the urgency level using the loaded Naive Bayes model.
+ * @param {string} text - The user's input message.
+ * @returns {Promise<string>} The predicted urgency level ("High" or "Medium").
+ */
+async function predictUrgency(text) {
+  await loadUrgencyAssets();
+  
+  const { classes, logProbs } = urgencyModel; // classes = ["High", "Medium"]
+  const { prior: logPriors, words: logWordProbs } = logProbs;
+  
+  const ngramIndices = processTextForUrgency(text);
+  
+  // Start with the prior probabilities for "High" and "Medium"
+  const scores = logPriors.slice(); 
+  
+  // Add the log probabilities for each word/ngram found in the text
+  for (const index of ngramIndices) {
+    if (logWordProbs[index]) {
+      scores[0] += logWordProbs[index][0]; // Add log prob for "High"
+      scores[1] += logWordProbs[index][1]; // Add log prob for "Medium"
+    }
+  }
+  
+  // Find the class with the highest score
   const maxScore = Math.max(...scores);
-  const exps = scores.map(score => Math.exp(score - maxScore));
-  const sumExps = exps.reduce((a, b) => a + b, 0);
-  const probs = exps.map(exp => exp / sumExps);
+  const bestClassIndex = scores.indexOf(maxScore);
   
-  // 4. Get best prediction
-  const best_index = probs.indexOf(Math.max(...probs));
-  
-  return {
-    urgency: labels[best_index], // e.g., "High"
-    urgencyConfidence: probs[best_index] * 100 // e.g., 55.9
-  };
+  return classes[bestClassIndex] || "Unknown";
 }
 
 
-// --- 2. LSTM (CATEGORY) FUNCTIONS ---
+// --- Main Export Function ---
 
 /**
- * Loads the Keras LSTM model and the tokenizer data
+ * Runs both ML pipelines in parallel to get category and urgency.
+ * This is the function called by Home.jsx.
+ * @param {string} text - The user's raw message.
+ * @returns {Promise<{category: string, urgency_level: string}>}
  */
-async function loadLSTMModel() {
-  if (lstmModel && lstmData) return;
+export const prioritizeAlert = async (text) => {
+  // If the message is empty, use the default "HELP"
+  const AIBot = "I'm sorry, I can't provide assistance with that."
+  const safeText = (text.trim() === "" || text.trim() === AIBot) ? "HELP" : text;
+
   try {
-    // Load models in parallel
-    const [modelResponse, dataResponse] = await Promise.all([
-      !lstmModel ? tf.loadLayersModel(LSTM_MODEL_PATH) : Promise.resolve(lstmModel),
-      !lstmData ? fetch(LSTM_DATA_PATH) : Promise.resolve(lstmData)
+    // Run both predictions at the same time
+    const [category, urgency_level] = await Promise.all([
+      predictCategory(safeText),
+      predictUrgency(safeText)
     ]);
 
-    if (!lstmModel) {
-      lstmModel = modelResponse;
-      console.log('✅ LSTM (Category) model loaded.');
-    }
-    if (!lstmData) {
-      lstmData = await dataResponse.json();
-      console.log('✅ LSTM (Category) data loaded.');
-    }
-  } catch (error) {
-    console.error('❌ Failed to load LSTM model/data:', error);
+    return { category, urgency_level };
+  } catch (err) {
+    console.error("Full ML Pipeline Error:", err);
+    // This fallback is caught by your try...catch block in Home.jsx
+    throw err; 
   }
-}
-
-/**
- * Preprocesses text for the LSTM model (Tokenize + Pad)
- */
-function preprocessForLSTM(message) {
-  if (!lstmData) return null;
-  const { vocabulary, max_len } = lstmData;
-
-  // Use the same cleaning function from your notebook
-  const text = message.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
-  const tokens = text.split(' ');
-  
-  let sequence = tokens.map(token => {
-    return vocabulary[token] || 0; // 0 is the padding/OOV token
-  });
-  
-  // Pad/Truncate
-  if (sequence.length > max_len) {
-    sequence = sequence.slice(0, max_len);
-  } else {
-    // Pad at the end (post-padding)
-    sequence = sequence.concat(Array(max_len - sequence.length).fill(0));
-  }
-  
-  // Convert to Tensor: [1, max_len]
-  return tf.tensor2d([sequence], [1, max_len], 'int32');
-}
-
-/**
- * Runs the LSTM model to predict Category
- */
-async function classifyCategoryLSTM(message) {
-  if (!lstmModel || !lstmData) return { category: "N/A", categoryConfidence: 0 };
-
-  const tensor = preprocessForLSTM(message);
-  if (!tensor) return { category: "N/A", categoryConfidence: 0 };
-  
-  // 1. Make prediction
-  const prediction = lstmModel.predict(tensor);
-  const scores = await prediction.data();
-  
-  // 2. Get best prediction
-  const best_index = scores.indexOf(Math.max(...scores));
-  const confidence = scores[best_index] * 100;
-  const category = lstmData.labels[best_index];
-  
-  tensor.dispose();
-  prediction.dispose();
-  
-  return {
-    category: category, // e.g., "Flood"
-    categoryConfidence: confidence // e.g., 86.37
-  };
-}
-
-
-// --- 3. FINAL UNIFIED FUNCTION ---
-
-/**
- * Main function to classify an alert.
- * Runs BOTH models to get a Category and an Urgency.
- */
-export const prioritizeAlert = async (message) => {
-  // Run both models in parallel
-  const [categoryResult, urgencyResult] = await Promise.all([
-    classifyCategoryLSTM(message),
-    classifyUrgencyNB(message)
-  ]);
-
-  // Combine the results
-  return {
-    category: categoryResult.category,
-    categoryConfidence: categoryResult.categoryConfidence,
-    urgency: urgencyResult.urgency,
-    urgencyConfidence: urgencyResult.urgencyConfidence,
-    // Create a final "Priority" score based on the urgency
-    priority: urgencyResult.urgency === 'High' ? 5 : 3 // Simple 5 (High) or 3 (Medium)
-  };
 };
 
-// --- 4. START LOADING MODELS IN BACKGROUND ---
-// Kick off loading both models as soon as the app loads.
-loadNBModel();
-loadLSTMModel();
+// --- Pre-warming ---
+// Call this to load models as soon as the app loads, 
+// so the first click isn't slow.
+(async () => {
+  try {
+    await Promise.all([
+      loadCategoryAssets(),
+      loadUrgencyAssets()
+    ]);
+    console.log("All ML models pre-warmed.");
+  } catch (err) {
+    console.warn("Could not pre-warm ML models:", err);
+  }
+})();

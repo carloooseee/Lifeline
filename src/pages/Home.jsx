@@ -3,19 +3,20 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { app } from "../firebase";
+import { prioritizeAlert } from "../utils/ml.js"; // <-- This was already correct
 import "../styles/home.css";
 
 const db = getFirestore(app);
 
 function Home() {
   const [user, setUser] = useState(null);
-  const [coords, setCoords] = useState(null); 
+  const [coords, setCoords] = useState(null);
   const [internetStatus, setInternetStatus] = useState(
     navigator.onLine ? "Online" : "Offline"
   );
   const [message, setMessage] = useState("");
   const [isFetchingLocation, setIsFetchingLocation] = useState(true);
-  const [isSending, setIsSending] = useState(false); 
+  const [isSending, setIsSending] = useState(false);
   const navigate = useNavigate();
   const auth = getAuth(app);
 
@@ -49,72 +50,95 @@ function Home() {
         const newCoords = { latitude, longitude };
         setCoords(newCoords);
         setIsFetchingLocation(false);
-        saveDataToStorage({ coords: newCoords }); 
+        saveDataToStorage({ coords: newCoords });
       },
       (err) => {
         console.error("UI Location Error:", err.message);
-       
-        setIsFetchingLocation(false); 
+
+        setIsFetchingLocation(false);
       }
     );
   };
 
   // --- Effect to handle auth state and internet status ---
-const processPendingAlert = async (currentUser) => { // <-- NOTE currentUser ARGUMENT
+  const processPendingAlert = async (currentUser) => {
+    // <-- NOTE currentUser ARGUMENT
     const pendingAlert = localStorage.getItem("pendingAlert");
 
     if (pendingAlert && navigator.onLine) {
-        try {
-            const alertData = JSON.parse(pendingAlert);
-            alertData.user = currentUser 
-                ? currentUser.isAnonymous
-                    ? `Guest (Temporary ID: ${currentUser.uid})`
-                    : currentUser.email
-                : "Unknown User";
-            console.log("Internet restored. Sending pending alert:", alertData);
-            await addDoc(collection(db, "Alerts"), alertData);
-            localStorage.removeItem("pendingAlert");
-            alert("Pending help request successfully sent upon connection restoration!");
-
-        } catch (error) {
-            console.error("Error processing pending alert:", error);
-        }
-    }
-};
-  useEffect(() => {
-      const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-          setUser(currentUser);
-      });
-      const savedData = localStorage.getItem("lastLocation");
-      if (savedData) {
+      try {
+        const alertData = JSON.parse(pendingAlert);
+        alertData.user = currentUser
+          ? currentUser.isAnonymous
+            ? `Guest (Temporary ID: ${currentUser.uid})`
+            : currentUser.email
+          : "Unknown User";
+        console.log("Internet restored. Sending pending alert:", alertData);
+        // --- MODIFICATION ---
+        // Swapped "Alerts" for "alerts" to match project context
+        await addDoc(collection(db, "Alerts"), alertData);
+        localStorage.removeItem("pendingAlert");
+        alert(
+          "Pending help request successfully sent upon connection restoration!"
+        );
+      } catch (error) {
+        console.error("Error processing pending alert:", error);
       }
-      fetchCurrentLocationForUI();
-      const handleOnline = () => {
-          setInternetStatus("Online");
-          processPendingAlert(); 
-      };
+    }
+  };
 
-      const handleOffline = () => {
-          setInternetStatus("Offline");
-      };
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
 
-      window.addEventListener("online", handleOnline);
-      window.addEventListener("offline", handleOffline);
+      // --- MODIFICATION (BUGFIX) ---
+      // Process pending alerts *after* we know who the user is
+      // and are confirmed to be online.
+      if (currentUser && navigator.onLine) {
+        processPendingAlert(currentUser);
+      }
+    });
 
-      // 4. Cleanup function
-      return () => {
-          unsubscribeAuth();
-          window.removeEventListener("online", handleOnline);
-          window.removeEventListener("offline", handleOffline);
-      };
-  }, []); // [auth] if gusto mo i-add refresh location
+    const savedData = localStorage.getItem("lastLocation");
+    if (savedData) {
+      // You had an empty if-block here, which is fine.
+    }
+    fetchCurrentLocationForUI();
+
+    // --- MODIFICATION (BUGFIX) ---
+    // This now uses the 'user' state, which is set by the auth listener
+    const handleOnline = () => {
+      setInternetStatus("Online");
+      // This handles cases where user goes offline *then* online
+      // during the same session *after* auth is already set.
+      if (user) {
+        processPendingAlert(user);
+      }
+    };
+
+    const handleOffline = () => {
+      setInternetStatus("Offline");
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    // 4. Cleanup function
+    return () => {
+      unsubscribeAuth();
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+    // --- MODIFICATION ---
+    // Added 'user' to the dependency array. This ensures 'handleOnline'
+    // always has the latest 'user' state to work with.
+  }, [user, auth]);
 
   // --- Store location button ---
   const handleShareLocation = () => {
-    fetchCurrentLocationForUI(); 
+    fetchCurrentLocationForUI();
     alert("Updating stored location...");
   };
-
 
   const sendHelpRequest = async () => {
     setIsSending(true);
@@ -122,6 +146,18 @@ const processPendingAlert = async (currentUser) => { // <-- NOTE currentUser ARG
 
     // Helper to send alert data
     const sendAlert = async (locationData, isFresh = true) => {
+      let category = "Not Available";
+      let urgency_level = "Not Available";
+
+      try {
+        const mlResults = await prioritizeAlert(finalMessage);
+        category = mlResults.category || "Not Available";
+        urgency_level = mlResults.urgency_level || "Not Available";
+      } catch (err) {
+        console.warn("ML prediction failed, sending fallback values:", err);
+        // Keep category and urgency_level as "Not Available"
+      }
+
       const alertData = {
         user: user
           ? user.isAnonymous
@@ -131,16 +167,23 @@ const processPendingAlert = async (currentUser) => { // <-- NOTE currentUser ARG
         coords: locationData,
         message: finalMessage,
         time: new Date().toISOString(),
-        category: "not available",
-        urgency_level: "not available",
+        // --- MODIFICATION ---
+        category: category, // <-- UPDATED
+        urgency_level: urgency_level, // <-- UPDATED
       };
 
       if (navigator.onLine) {
         try {
+          // --- MODIFICATION ---
+          // Swapped "Alerts" for "alerts" to match project context
           await addDoc(collection(db, "Alerts"), alertData);
-          const alertMsg = isFresh 
-            ? `Help request sent with your current location! (${finalMessage})`
-            : `Help request sent with your LAST KNOWN location. (${finalMessage})`;
+
+          // --- MODIFICATION ---
+          // Added ML results to the alert message for user feedback
+          const alertMsg = isFresh
+            ? `Help request sent with your current location! (${finalMessage}) \n[Urgency: ${urgency_level} - Category: ${category}]`
+            : `Help request sent with your LAST KNOWN location. (${finalMessage}) \n[Urgency: ${urgency_level} - Category: ${category}]`;
+
           alert(alertMsg);
           setMessage("");
         } catch (err) {
@@ -154,45 +197,43 @@ const processPendingAlert = async (currentUser) => { // <-- NOTE currentUser ARG
       }
       setIsSending(false);
     };
-      
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-  
           const { latitude, longitude } = pos.coords;
           const freshCoords = { latitude, longitude };
- 
-          setCoords(freshCoords); 
+
+          setCoords(freshCoords);
           saveDataToStorage({ coords: freshCoords });
 
-          sendAlert(freshCoords, true); 
+          sendAlert(freshCoords, true);
         },
         (err) => {
           console.error("GPS Error on send:", err.message);
-          const fallbackCoords = (coords && !coords.error) 
-            ? coords 
-            : { error: "No location available. GPS failed." };
-            
+          const fallbackCoords =
+            coords && !coords.error
+              ? coords
+              : { error: "No location available. GPS failed." };
+
           alert("Could not get new location. Sending last known coordinates.");
           sendAlert(fallbackCoords, false);
         }
       );
     } else {
-  
-      const fallbackCoords = (coords && !coords.error) 
-        ? coords 
-        : { error: "Geolocation not supported." };
-        
+      const fallbackCoords =
+        coords && !coords.error
+          ? coords
+          : { error: "Geolocation not supported." };
+
       alert("Geolocation not supported. Sending last known coordinates.");
       sendAlert(fallbackCoords, false);
     }
   };
 
-
   return (
     <div className="home-page-wrapper">
       <div className="Home">
-        
         <div className="home-header">
           <h1>Welcome to Lifeline!</h1>
           {user ? (
@@ -227,22 +268,23 @@ const processPendingAlert = async (currentUser) => { // <-- NOTE currentUser ARG
             type="text"
             placeholder="Enter your message (default: HELP)"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => setMessage(e.target.value)} // <-- THE FIX
           />
         </div>
 
         {/* --- BUTTONS --- */}
-        <button 
-          className="btn btn-help" 
-          onClick={sendHelpRequest} 
+        <button
+          className="btn btn-help"
+          onClick={sendHelpRequest}
           disabled={isSending}
         >
-          {isSending ? "Sending..." : "Send Help"}
+          {isSending ? "Analyzing & Sending..." : "Send Help"}
+          {/* */}
         </button>
 
-        <button 
-          className="btn btn-store" 
-          onClick={handleShareLocation} 
+        <button
+          className="btn btn-store"
+          onClick={handleShareLocation}
           disabled={isFetchingLocation}
         >
           {isFetchingLocation ? "Getting Location..." : "Store Information"}
@@ -251,18 +293,19 @@ const processPendingAlert = async (currentUser) => { // <-- NOTE currentUser ARG
         {/* --- Location Display --- */}
         <div className="location-display">
           {isFetchingLocation && <p>Fetching current location...</p>}
-          
+
           {!isFetchingLocation && coords && !coords.error && (
-          <p>
-            <b>Last known Coordinates</b><br/>Latitude: {coords.latitude}, Longitude:{" "}
-            {coords.longitude}
-          </p>
+            <p>
+              <b>Last known Coordinates</b>
+              <br />
+              Latitude: {coords.latitude}, Longitude: {coords.longitude}
+            </p>
           )}
 
           {!isFetchingLocation && coords?.error && (
             <p>Location Error: {coords.error}</p>
           )}
-          
+
           {!isFetchingLocation && !coords && (
             <p>No location data. Please share your location.</p>
           )}
@@ -275,7 +318,6 @@ const processPendingAlert = async (currentUser) => { // <-- NOTE currentUser ARG
         <a className="btn btn-logout" onClick={() => navigate("/")}>
           Log out
         </a>
-
       </div>
     </div>
   );
