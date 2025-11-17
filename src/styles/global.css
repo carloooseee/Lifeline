@@ -1,0 +1,32 @@
+/* Hide scrollbars globally while maintaining scroll functionality */
+
+/* For Webkit browsers (Chrome, Safari, Edge) */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Ensure html and body can still scroll */
+html,
+body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Apply to all elements that might have scrollbars */
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+

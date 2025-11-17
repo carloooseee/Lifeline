@@ -171,21 +171,7 @@
   border-radius: 8px;
   background-color: #fdfdfd;
 
-  /* --- Custom Scrollbar Styles (Webkit) --- */
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-  &::-webkit-scrollbar-track {
-    background: var(--eas-bg-light);
-    border-radius: 10px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: var(--eas-scroll);
-    border-radius: 10px;
-  }
-  &::-webkit-scrollbar-thumb:hover {
-    background: var(--eas-scroll);
-  }
+  /* Scrollbars are hidden globally but scrolling still works */
 }
 
 .alertBox ol {
