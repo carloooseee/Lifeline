@@ -322,7 +322,7 @@ body {
 
 @media (max-width: 900px) {
   .home-page-wrapper::before {
-    background-image: url("/pictures/homemobile.png");
+    background-image: url("../assets/homemobile.png");
   }
 }
 
@@ -343,7 +343,7 @@ body {
 
 @media (min-width: 901px) and (orientation: portrait) {
   .home-page-wrapper::before {
-    background-image: url("/pictures/homemobile.png");
+    background-image: url("../assets/homemobile.png");
   }
 
   .Home {
@@ -353,6 +353,6 @@ body {
 
 @media (min-width: 901px) and (orientation: landscape) {
   .home-page-wrapper::before {
-    background-image: url("/pictures/home.png");
+    background-image: url("../assets/home.png");
   }
 }

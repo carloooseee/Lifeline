@@ -371,7 +371,7 @@ input {
 /* Change background based on aspect ratio (orientation) */
 @media (orientation: portrait) {
     .login-page {
-        background-image: url('/pictures/Rescuemobile.png');
+        background-image: url('../assets/Rescuemobile.png');
         background-size: cover;
         background-repeat: no-repeat;
         background-position: center;
@@ -380,7 +380,7 @@ input {
 
 @media (orientation: landscape) {
     .login-page {
-        background-image: url('/pictures/Rescue.png');
+        background-image: url('../assets/Rescue.png');
         background-size: cover;
         background-repeat: no-repeat;
         background-position: center;
