@@ -3,10 +3,11 @@
 
 import * as ort from "onnxruntime-web";
 
-// -----------------------------------------
-// SAFE WASM CONFIG (correct + stable)
-// -----------------------------------------
-ort.env.wasm.wasmPaths = "/onnx/";
+const BASE_PATH = window.location.hostname === "localhost"
+  ? ""
+  : "/Lifeline";
+
+ort.env.wasm.wasmPaths = `${BASE_PATH}/onnx/`;
 ort.env.wasm.simd = true;
 ort.env.wasm.numThreads = 1;
 ort.env.wasm.proxy = false;   // ← IMPORTANT: force main-thread wasm
@@ -16,12 +17,12 @@ ort.env.wasm.proxy = false;   // ← IMPORTANT: force main-thread wasm
 // -----------------------------------------
 // Paths
 // -----------------------------------------
-const BASE = "/models";
-const CATEGORY_MODEL_URL = `${BASE}/category_model.onnx`;
-const VECTORIZER_URL = `${BASE}/vectorizer.json`;
-const CATEGORY_LABELS_URL = `${BASE}/category_labels.json`;
-const URGENCY_MODEL_URL = `${BASE}/urgency_nb.json`;
-const URGENCY_LABELS_URL = `${BASE}/urgency_labels.json`;
+const CATEGORY_MODEL_URL = `${BASE_PATH}/models/category_model.onnx`;
+const VECTORIZER_URL = `${BASE_PATH}/models/vectorizer.json`;
+const CATEGORY_LABELS_URL = `${BASE_PATH}/models/category_labels.json`;
+const URGENCY_MODEL_URL = `${BASE_PATH}/models/urgency_nb.json`;
+const URGENCY_LABELS_URL = `${BASE_PATH}/models/urgency_labels.json`;
+
 
 // -----------------------------------------
 let ortSession = null;
