@@ -29,7 +29,6 @@ function Home() {
   const [isFetchingLocation, setIsFetchingLocation] = useState(true);
   const [isSending, setIsSending] = useState(false);
 
-  // 🟢 NEW: Track active alert
   const [activeAlert, setActiveAlert] = useState(null);
 
   const navigate = useNavigate();
@@ -74,13 +73,12 @@ function Home() {
 
   const processPendingAlert = async (currentUser) => {
     const pendingAlert = localStorage.getItem("pendingAlert");
-
     if (pendingAlert && navigator.onLine) {
       try {
         const alertData = JSON.parse(pendingAlert);
         alertData.user = currentUser
           ? currentUser.isAnonymous
-            ? `Guest (Temporary ID: ${currentUser.uid})`
+            ? `Guest (${currentUser.uid})`
             : currentUser.email
           : "Unknown User";
 
@@ -93,11 +91,9 @@ function Home() {
     }
   };
 
-  // 🟢 NEW: Real-time listener for user's active alert
+  // LISTEN FOR ACTIVE ALERT
   useEffect(() => {
-    if (!auth.currentUser) return;
-
-    if (auth.currentUser.isAnonymous) {
+    if (!auth.currentUser || auth.currentUser.isAnonymous) {
       setActiveAlert(null);
       return;
     }
@@ -124,43 +120,35 @@ function Home() {
     return () => unsubscribe();
   }, [auth.currentUser]);
 
-  // 🟢 NEW: Complete alert
-const markAlertCompleted = async () => {
-  try {
-    const current = getAuth().currentUser;
-    if (!current) {
-      alert("You must be signed in to complete the task.");
-      return;
-    }
-    if (!activeAlert) return;
+  // COMPLETE ALERT
+  const markAlertCompleted = async () => {
+    try {
+      const current = getAuth().currentUser;
+      if (!current) {
+        alert("You must be signed in to complete the task.");
+        return;
+      }
+      if (!activeAlert) return;
 
-    // Safety check: ensure doc has owner info
-    if (!activeAlert.userId) {
-      alert("This alert has no owner info — cannot complete.");
-      return;
-    }
+      if (!activeAlert.userId) {
+        alert("This alert has no owner info.");
+        return;
+      }
 
-    // Confirm ownership
-    if (activeAlert.userId !== current.uid) {
-      alert("You are not authorized to complete this alert.");
-      return;
-    }
+      if (activeAlert.userId !== current.uid) {
+        alert("You are not authorized to complete this alert.");
+        return;
+      }
 
-    // Proceed to delete
-    await deleteDoc(doc(db, "Alerts", activeAlert.id));
-    alert("Task completed and removed.");
-  } catch (err) {
-    console.error("Complete task error:", err);
-    // Friendly user feedback:
-    if (err?.code === "permission-denied") {
-      alert("Failed to complete task: insufficient permissions. Contact admin.");
-    } else {
-      alert("Failed to complete task. See console for details.");
+      await deleteDoc(doc(db, "Alerts", activeAlert.id));
+      alert("Task completed and removed.");
+    } catch (err) {
+      console.error("Complete task error:", err);
+      alert("Failed to complete task.");
     }
-  }
-};
+  };
 
-  // AUTH + LOCATION EFFECT (SAME AS YOUR OLD CODE)
+  // AUTH + STATUS
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -191,7 +179,29 @@ const markAlertCompleted = async () => {
     alert("Updating location...");
   };
 
+  // =====================================================
+  //      🔥 RATE LIMIT BLOCK (DO NOT TOUCH ANYTHING ELSE)
+  // =====================================================
   const sendHelpRequest = async () => {
+    // --- LOCAL RATE LIMIT: max 5 alerts per hour ---
+    const now = Date.now();
+    const oneHour = 60 * 60 * 1000;
+
+    let history = JSON.parse(localStorage.getItem("alertHistory")) || [];
+    history = history.filter(t => now - t < oneHour);
+
+    if (history.length >= 5) {
+      alert("You are sending alerts too quickly. Please wait.");
+      return;
+    }
+
+    // Save the timestamp
+    history.push(now);
+    localStorage.setItem("alertHistory", JSON.stringify(history));
+    // =====================================================
+    //      END OF RATE LIMIT BLOCK
+    // =====================================================
+
     setIsSending(true);
     const finalMessage = message.trim() === "" ? "HELP" : message.trim();
 
@@ -206,10 +216,10 @@ const markAlertCompleted = async () => {
       } catch {}
 
       const alertData = {
-        userId: auth.currentUser?.uid || null, // 🟢 NEW
+        userId: auth.currentUser?.uid || null,
         user: user
           ? user.isAnonymous
-            ? `Guest (Temporary ID: ${user.uid})`
+            ? `Guest (${user.uid})`
             : user.email
           : "Unknown User",
         coords: locationData,
@@ -217,7 +227,7 @@ const markAlertCompleted = async () => {
         time: new Date().toISOString(),
         category,
         urgency_level,
-        alertCompleted: false, // 🟢 NEW
+        alertCompleted: false,
       };
 
       try {
@@ -251,22 +261,31 @@ const markAlertCompleted = async () => {
   return (
     <div className="home-page-wrapper">
       <div className="logo home-logo">
-        <h1><span className="life">Life</span><span className="line">Line</span></h1>
+        <h1>
+          <span className="life">Life</span>
+          <span className="line">Line</span>
+        </h1>
         <p>Emergency Alert System</p>
       </div>
 
       <div className="Home">
         <div className="logo home-logo-mobile">
-          <h1><span className="life">Life</span><span className="line">Line</span></h1>
+          <h1>
+            <span className="life">Life</span>
+            <span className="line">Line</span>
+          </h1>
           <p>Emergency Alert System</p>
         </div>
 
         <div className="home-header">
           <h1>Welcome to Lifeline!</h1>
+
           {user ? (
             <p>
               Welcome{" "}
-              {user.isAnonymous ? `Guest (Temporary ID: ${user.uid})` : user.email}
+              {user.isAnonymous
+                ? `Guest (Temporary ID: ${user.uid})`
+                : user.email}
             </p>
           ) : (
             <p>Loading user...</p>
@@ -274,15 +293,18 @@ const markAlertCompleted = async () => {
 
           <p>
             <span className="status-text">Status:</span>
-            <span className={`status-indicator ${
-              internetStatus === "Online" ? "status-online" : "status-offline"
-            }`}>
+            <span
+              className={`status-indicator ${
+                internetStatus === "Online"
+                  ? "status-online"
+                  : "status-offline"
+              }`}
+            >
               {internetStatus}
             </span>
           </p>
         </div>
 
-        {/* MESSAGE INPUT */}
         <div className="message-group">
           <label><b>Message:</b></label>
           <input
@@ -294,12 +316,10 @@ const markAlertCompleted = async () => {
           />
         </div>
 
-        {/* SEND HELP */}
         <button className="btn btn-help" onClick={sendHelpRequest} disabled={isSending}>
           {isSending ? "Sending..." : "Send Help"}
         </button>
 
-        {/* STORE LOCATION */}
         <button
           className="btn btn-store"
           onClick={handleShareLocation}
@@ -308,30 +328,26 @@ const markAlertCompleted = async () => {
           {isFetchingLocation ? "Getting Location..." : "Store Information"}
         </button>
 
-        {/* LOCATION */}
         <div className="location-display">
           {isFetchingLocation && <p>Fetching current location...</p>}
-
           {!isFetchingLocation && coords && !coords.error && (
             <p>
               <b>Last known Coordinates</b><br />
               Latitude: {coords.latitude}, Longitude: {coords.longitude}
             </p>
           )}
-
           {!isFetchingLocation && coords?.error && (
             <p>Location Error: {coords.error}</p>
           )}
         </div>
 
-        {/* 🟢 ACTIVE ALERT BOX */}
         {!auth.currentUser?.isAnonymous && activeAlert && (
           <div className="active-alert">
             <h3>Active Alert</h3>
             <p><b>Message:</b> {activeAlert.message}</p>
             {activeAlert.coords && (
               <p>
-                <b>Coords:</b> {activeAlert.coords.latitude}, {" "}
+                <b>Coords:</b> {activeAlert.coords.latitude},{" "}
                 {activeAlert.coords.longitude}
               </p>
             )}
@@ -341,7 +357,6 @@ const markAlertCompleted = async () => {
           </div>
         )}
 
-        {/* VIEW & LOGOUT BUTTONS */}
         <button className="btn btn-map" onClick={() => navigate("/reports")}>
           View Alert
         </button>
