@@ -3,25 +3,20 @@
 
 import * as ort from "onnxruntime-web";
 
-const BASE_PATH = window.location.hostname === "localhost"
-  ? ""
-  : "/Lifeline";
+
+const BASE_PATH = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 
 ort.env.wasm.wasmPaths = `${BASE_PATH}/onnx/`;
 ort.env.wasm.simd = true;
 ort.env.wasm.numThreads = 1;
-ort.env.wasm.proxy = false;   // ← IMPORTANT: force main-thread wasm
-// ❗ Do NOT set wasmFile manually
-// ❗ Do NOT use backendHint
+ort.env.wasm.proxy = false;
 
-// -----------------------------------------
-// Paths
-// -----------------------------------------
-const CATEGORY_MODEL_URL = `${BASE_PATH}/models/category_model.onnx`;
-const VECTORIZER_URL = `${BASE_PATH}/models/vectorizer.json`;
-const CATEGORY_LABELS_URL = `${BASE_PATH}/models/category_labels.json`;
-const URGENCY_MODEL_URL = `${BASE_PATH}/models/urgency_nb.json`;
-const URGENCY_LABELS_URL = `${BASE_PATH}/models/urgency_labels.json`;
+const CATEGORY_MODEL_URL      = `${BASE_PATH}/models/category_model.onnx`;
+const VECTORIZER_URL          = `${BASE_PATH}/models/vectorizer.json`;
+const CATEGORY_LABELS_URL     = `${BASE_PATH}/models/category_labels.json`;
+const URGENCY_MODEL_URL       = `${BASE_PATH}/models/urgency_nb.json`;
+const URGENCY_LABELS_URL      = `${BASE_PATH}/models/urgency_labels.json`;
 
 
 // -----------------------------------------

@@ -2,10 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
-const isGitHub = process.env.NODE_ENV === "production";
-
 export default defineConfig({
-  base: isGitHub ? "/Lifeline/" : "/",
+  base: "/Lifeline/",
 
   plugins: [
     react(),
