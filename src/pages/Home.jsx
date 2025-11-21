@@ -179,9 +179,6 @@ function Home() {
     alert("Updating location...");
   };
 
-  // =====================================================
-  //      🔥 RATE LIMIT BLOCK (DO NOT TOUCH ANYTHING ELSE)
-  // =====================================================
   const sendHelpRequest = async () => {
     // --- LOCAL RATE LIMIT: max 5 alerts per hour ---
     const now = Date.now();
@@ -195,12 +192,18 @@ function Home() {
       return;
     }
 
-    // Save the timestamp
     history.push(now);
     localStorage.setItem("alertHistory", JSON.stringify(history));
-    // =====================================================
-    //      END OF RATE LIMIT BLOCK
-    // =====================================================
+
+    // --- 10 SECOND COOLDOWN ---
+    const lastSend = localStorage.getItem("lastSendTimestamp");
+    if (lastSend && now - Number(lastSend) < 10 * 1000) {
+      const secondsLeft = Math.ceil((10 * 1000 - (now - Number(lastSend))) / 1000);
+      alert(`Please wait ${secondsLeft} more second(s) before sending again.`);
+      return;
+    }
+    localStorage.setItem("lastSendTimestamp", now.toString());
+    // -----------------------------------------
 
     setIsSending(true);
     const finalMessage = message.trim() === "" ? "HELP" : message.trim();
