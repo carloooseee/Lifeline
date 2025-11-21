@@ -63,17 +63,20 @@ body {
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 100vh;
-  padding: 3rem 1.5rem;
+  height: 100vh;
+  max-height: 100vh;
+  padding: 2rem 1.5rem;
   font-family: "Poppins", sans-serif;
   background: linear-gradient(to right, #f5f5f5 0%, #ffffff 100%);
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .home-page-wrapper::before {
   content: "";
   position: absolute;
   inset: 0;
+  background-image: url("../assets/home.png");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -87,16 +90,19 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1.5rem;
+  gap: 1rem;
   width: 43.75rem;
   max-width: 90vw;
-  padding: 3.75rem 3.125rem;
+  max-height: calc(100vh - 4rem);
+  padding: 2.5rem 3.125rem;
   background-color: #ffffff;
   border-radius: 2.1875rem;
   border: 3px solid var(--home-border);
   box-shadow: 1.0625rem 1.0625rem 0 rgba(0, 0, 0, 1);
   color: var(--home-text);
   box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .home-logo-mobile {
@@ -108,14 +114,14 @@ body {
 }
 
 .home-header h1 {
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(1.75rem, 4vw, 3rem);
   font-weight: 600;
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 0.5rem 0;
 }
 
 .home-header p {
-  font-size: 1.125rem;
-  margin: 0.25rem 0;
+  font-size: clamp(0.95rem, 1.5vw, 1.125rem);
+  margin: 0.15rem 0;
   color: #555555;
 }
 
@@ -148,7 +154,7 @@ body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .message-group label {
@@ -159,8 +165,8 @@ body {
 
 .message-input {
   width: 100%;
-  padding: 0.85rem 1rem;
-  font-size: 1.125rem;
+  padding: 0.7rem 1rem;
+  font-size: clamp(0.95rem, 1.5vw, 1.125rem);
   border-radius: 0.6875rem;
   border: 1px solid #dddddd;
   background-color: #f2f2f2;
@@ -177,8 +183,8 @@ body {
 
 .btn {
   width: 100%;
-  padding: 0.85rem;
-  font-size: 1.25rem;
+  padding: 0.7rem;
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
   font-weight: 600;
   border-radius: 0.6875rem;
   border: none;
@@ -245,13 +251,13 @@ body {
 
 .location-display {
   width: 100%;
-  padding: 1.25rem;
+  padding: 1rem;
   background-color: #f9f9f9;
   border-radius: 0.9375rem;
   border: 1px solid #e5e5e5;
   color: var(--home-text);
-  font-size: 1.0625rem;
-  line-height: 1.6;
+  font-size: clamp(0.9rem, 1.3vw, 1.0625rem);
+  line-height: 1.5;
   box-sizing: border-box;
 }
 
@@ -262,7 +268,12 @@ body {
 @media (max-width: 1200px) {
   .Home {
     width: 37.5rem;
-    padding: 2.75rem 2.25rem;
+    padding: 2rem 2.25rem;
+    gap: 0.875rem;
+  }
+  
+  .home-page-wrapper {
+    padding: 1.5rem 1.5rem;
   }
 }
 
@@ -275,7 +286,7 @@ body {
     display: block;
     align-self: flex-start;
     text-align: left;
-    margin: -0.5rem 0 1rem;
+    margin: -0.5rem 0 0.5rem;
   }
 
   .home-logo-mobile p {
@@ -285,7 +296,11 @@ body {
   .Home {
     align-items: stretch;
     text-align: left;
-    padding: 1.25rem 1.8rem 2.5rem;
+    padding: 1rem 1.5rem;
+    width: 90%;
+    max-width: 31.25rem;
+    max-height: calc(100vh - 2rem);
+    gap: 0.75rem;
   }
 
   .Home .message-group,
@@ -294,21 +309,19 @@ body {
   }
 
   .home-page-wrapper {
-    padding: 3.5rem 1.25rem 2.5rem;
+    padding: 1rem 1.25rem;
+    height: 100vh;
+    max-height: 100vh;
   }
 
   .home-page-wrapper::before {
+    background-image: url("../assets/homemobile.png");
     opacity: 0.25;
   }
 
-  .Home {
-    width: 90%;
-    max-width: 31.25rem;
-    box-shadow: 0.625rem 0.625rem 0 rgba(0, 0, 0, 1);
-  }
-
   .home-header h1 {
-    font-size: 2.125rem;
+    font-size: clamp(1.5rem, 5vw, 2.125rem);
+    margin-bottom: 0.4rem;
   }
 
   .home-header p,
@@ -316,28 +329,38 @@ body {
   .message-input,
   .btn,
   .location-display {
-    font-size: 1.05rem;
+    font-size: clamp(0.9rem, 2.5vw, 1.05rem);
   }
-}
-
-@media (max-width: 900px) {
-  .home-page-wrapper::before {
-    background-image: url("../assets/homemobile.png");
+  
+  .location-display {
+    padding: 0.75rem;
   }
 }
 
 @media (max-width: 600px) {
   .home-page-wrapper {
-    padding: 1.5rem 1rem 2rem;
+    padding: 0.75rem 1rem;
+    height: 100vh;
+    max-height: 100vh;
   }
 
   .Home {
-    padding: 1.25rem 1.5rem 2.25rem;
-    border-radius: 1.5rem;
+    padding: 0.875rem 1.25rem;
+    max-height: calc(100vh - 1.5rem);
+    gap: 0.625rem;
   }
 
   .home-header h1 {
-    font-size: 1.9rem;
+    font-size: clamp(1.35rem, 6vw, 1.9rem);
+    margin-bottom: 0.3rem;
+  }
+  
+  .btn {
+    padding: 0.6rem;
+  }
+  
+  .location-display {
+    padding: 0.625rem;
   }
 }
 
@@ -348,11 +371,36 @@ body {
 
   .Home {
     padding-top: 1rem;
+    max-height: calc(100vh - 3rem);
+  }
+  
+  .home-page-wrapper {
+    padding: 1.5rem 1.5rem;
   }
 }
 
 @media (min-width: 901px) and (orientation: landscape) {
   .home-page-wrapper::before {
     background-image: url("../assets/home.png");
+  }
+}
+
+/* Remove box styling based on aspect ratio, not just resolution */
+@media (max-aspect-ratio: 9/11) {
+  .Home {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* Remove box panel styling at 450px width and under (450x550 aspect ratio and under) */
+@media (max-width: 450px) {
+  .Home {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
   }
 }

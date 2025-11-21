@@ -1,6 +1,8 @@
 .login-page {
     display: flex;
     height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
     font-family: 'Poppins', sans-serif;
     font-size: 16px;
 }
@@ -56,25 +58,28 @@
     transform: translateY(-50%);
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     background-color: white;
-    padding: 4.375rem;
+    padding: 2.5rem 4.375rem;
     border-radius: 2.1875rem;
     border: 3px solid black;
     box-shadow: 1.0625rem 1.0625rem 0 rgba(0, 0, 0, 1);
     width: 43.75rem;
-    height: 50rem;
+    max-height: 90vh;
     max-width: 90%;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .login-panel h1 {
-    font-size: 3rem;
+    font-size: clamp(1.75rem, 3vw, 3rem);
     font-weight: 600;
-    margin-bottom: 1.875rem;
+    margin-bottom: 1.25rem;
     color: #333;
     text-align: left;
-    width: 34.375rem;
+    width: 100%;
+    max-width: 34.375rem;
 }
 
 .login-panel h2 {
@@ -106,10 +111,10 @@ form {
 input {
     width: 100%;
     padding: 0.75rem;
-    margin-bottom: 1.875rem;
+    margin-bottom: 1.25rem;
     border: 1px solid #ddd;
     border-radius: 0.6875rem;
-    font-size: 1.375rem;
+    font-size: clamp(1rem, 1.5vw, 1.375rem);
     box-sizing: border-box;
     background-color: #f2f2f2;
     color: black;
@@ -118,7 +123,7 @@ input {
 .password-input-container {
     position: relative;
     width: 100%;
-    margin-bottom: 0.625rem;
+    margin-bottom: 0.25rem;
 }
 
 .password-input-container input {
@@ -127,10 +132,11 @@ input {
     padding-right: 2.5rem;
     border: 1px solid #ddd;
     border-radius: 0.6875rem;
-    font-size: 1.375rem;
+    font-size: clamp(1rem, 1.5vw, 1.375rem);
     box-sizing: border-box;
     background-color: #f2f2f2;
     color: black;
+    margin-bottom: 1.25rem;
 }
 
 .password-toggle {
@@ -153,8 +159,8 @@ input {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    margin-top: 1.5rem;
-    margin-bottom: 2.1875rem;
+    margin-top: 0.75rem;
+    margin-bottom: 1.25rem;
 }
 
 .switch-label {
@@ -218,9 +224,9 @@ input {
     color: white;
     border: none;
     border-radius: 0.6875rem;
-    font-size: 1.375rem;
+    font-size: clamp(1rem, 1.5vw, 1.375rem);
     cursor: pointer;
-    margin-bottom: 1.5625rem;
+    margin-bottom: 1rem;
     transition: opacity 0.3s;
 }
 
@@ -235,9 +241,9 @@ input {
     color: white;
     border: none;
     border-radius: 0.6875rem;
-    font-size: 1.375rem;
+    font-size: clamp(1rem, 1.5vw, 1.375rem);
     cursor: pointer;
-    margin-bottom: 1.5625rem;
+    margin-bottom: 1rem;
     transition: opacity 0.3s;
 }
 
@@ -252,12 +258,12 @@ input {
     color: white;
     border: none;
     border-radius: 0.6875rem;
-    font-size: 1.375rem;
+    font-size: clamp(1rem, 1.5vw, 1.375rem);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 2.1875rem;
+    margin-bottom: 1rem;
     transition: opacity 0.3s;
 }
 
@@ -318,7 +324,8 @@ input {
         left: 0;
         z-index: 1;
         text-align: center;
-        padding-top: 30px;
+        padding-top: 1rem;
+        padding-bottom: 0.5rem;
     }
     .logo h1 {
         font-size: 3.75rem;
@@ -338,16 +345,17 @@ input {
         width: 90%;
         height: auto;
         max-width: 31.25rem;
-        margin: 1.25rem auto;
-        padding: 1.875rem;
+        max-height: calc(100vh - 2rem);
+        margin: 1rem auto;
+        padding: 1.5rem 1.875rem;
         box-shadow: 0.625rem 0.625rem 0 rgba(0, 0, 0, 1);
     }
 
 
     .login-panel h1 {
-        font-size: 2rem;
+        font-size: clamp(1.5rem, 5vw, 2rem);
         width: 100%;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1rem;
     }
     .login-panel h2 {
         font-size: 1.5rem;
@@ -364,7 +372,11 @@ input {
     }
 
     .form-options {
-        margin-bottom: 1.5625rem;
+        margin-bottom: 1rem;
+    }
+    
+    .signup-link {
+        margin-top: 0.5rem;
     }
 }
 
