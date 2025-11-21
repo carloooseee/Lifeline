@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
   getFirestore,
@@ -10,7 +10,7 @@ import {
   limit,
   onSnapshot,
   deleteDoc,
-  doc,
+  doc
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { app } from "../firebase";
@@ -29,16 +29,11 @@ function Home() {
   const [isFetchingLocation, setIsFetchingLocation] = useState(true);
   const [isSending, setIsSending] = useState(false);
 
-  // 🟢 ADDED: Track the currently active alert
+  // 🟢 NEW: Track active alert
   const [activeAlert, setActiveAlert] = useState(null);
 
   const navigate = useNavigate();
   const auth = getAuth(app);
-
-  // -------------------------
-  // YOUR EXISTING FUNCTIONS
-  // (not modified)
-  // -------------------------
 
   const saveDataToStorage = (locationData) => {
     const dataToSave = {
@@ -91,28 +86,24 @@ function Home() {
 
         await addDoc(collection(db, "Alerts"), alertData);
         localStorage.removeItem("pendingAlert");
-        alert("Pending help request successfully sent!");
+        alert("Pending alert sent!");
       } catch (error) {
-        console.error("Error sending pending alert:", error);
+        console.error("Pending alert error:", error);
       }
     }
   };
 
-  // ----------------------------------
-  // 🟢 NEW: Real-time listener for active alert
-  // ----------------------------------
+  // 🟢 NEW: Real-time listener for user's active alert
   useEffect(() => {
-    if (!user || !auth.currentUser) return;
+    if (!auth.currentUser) return;
 
-    // Ignore guests — they can send alerts but cannot track/complete them
     if (auth.currentUser.isAnonymous) {
       setActiveAlert(null);
       return;
     }
 
-    const alertsRef = collection(db, "Alerts");
     const q = query(
-      alertsRef,
+      collection(db, "Alerts"),
       where("userId", "==", auth.currentUser.uid),
       where("alertCompleted", "==", false),
       orderBy("time", "desc"),
@@ -131,31 +122,24 @@ function Home() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [auth.currentUser]);
 
-  // ----------------------------------
-  // 🟢 NEW: Complete alert (delete document)
-  // ----------------------------------
+  // 🟢 NEW: Complete alert
   const markAlertCompleted = async () => {
     if (!activeAlert) return;
-
     try {
       await deleteDoc(doc(db, "Alerts", activeAlert.id));
-      alert("Task completed and removed.");
+      alert("Task completed.");
     } catch (err) {
-      console.error("Error completing alert:", err);
+      console.error("Complete task error:", err);
     }
   };
 
-  // -------------------------------
-  // Auth + Online/Offline Listener
-  // -------------------------------
+  // AUTH + LOCATION EFFECT (SAME AS YOUR OLD CODE)
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+    const unsub = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      if (currentUser && navigator.onLine) {
-        processPendingAlert(currentUser);
-      }
+      if (currentUser && navigator.onLine) processPendingAlert(currentUser);
     });
 
     fetchCurrentLocationForUI();
@@ -165,42 +149,39 @@ function Home() {
       if (user) processPendingAlert(user);
     };
 
-    const handleOffline = () => {
-      setInternetStatus("Offline");
-    };
+    const handleOffline = () => setInternetStatus("Offline");
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
     return () => {
-      unsubscribeAuth();
+      unsub();
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
   }, [user]);
 
-  // -------------------------
-  // sendHelpRequest MODIFIED:
-  // Added alertCompleted + userId
-  // -------------------------
+  const handleShareLocation = () => {
+    fetchCurrentLocationForUI();
+    alert("Updating location...");
+  };
+
   const sendHelpRequest = async () => {
     setIsSending(true);
     const finalMessage = message.trim() === "" ? "HELP" : message.trim();
 
-    const sendAlert = async (locationData, isFresh = true) => {
+    const sendAlert = async (locationData) => {
       let category = "Not Available";
       let urgency_level = "Not Available";
 
       try {
         const mlResults = await prioritizeAlert(finalMessage);
-        category = mlResults.category || "Not Available";
-        urgency_level = mlResults.urgency_level || "Not Available";
-      } catch (err) {
-        console.warn("ML error, fallback values used.", err);
-      }
+        category = mlResults.category;
+        urgency_level = mlResults.urgency_level;
+      } catch {}
 
       const alertData = {
-        userId: user?.uid || null, // 🟢 NEW
+        userId: auth.currentUser?.uid || null, // 🟢 NEW
         user: user
           ? user.isAnonymous
             ? `Guest (Temporary ID: ${user.uid})`
@@ -214,16 +195,11 @@ function Home() {
         alertCompleted: false, // 🟢 NEW
       };
 
-      if (navigator.onLine) {
-        try {
-          await addDoc(collection(db, "Alerts"), alertData);
-          alert("Help request sent!");
-          setMessage("");
-        } catch (err) {
-          localStorage.setItem("pendingAlert", JSON.stringify(alertData));
-          alert("Offline, alert queued locally.");
-        }
-      } else {
+      try {
+        await addDoc(collection(db, "Alerts"), alertData);
+        alert("Help request sent!");
+        setMessage("");
+      } catch {
         localStorage.setItem("pendingAlert", JSON.stringify(alertData));
         alert("Offline, alert queued locally.");
       }
@@ -233,49 +209,121 @@ function Home() {
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const freshCoords = {
+        const data = {
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
         };
-        setCoords(freshCoords);
-        saveDataToStorage({ coords: freshCoords });
-        sendAlert(freshCoords, true);
+        setCoords(data);
+        saveDataToStorage({ coords: data });
+        sendAlert(data);
       },
       () => {
-        const fallback = coords || { error: "No location available." };
-        sendAlert(fallback, false);
+        sendAlert(coords || { error: "No location available" });
       }
     );
   };
 
   return (
     <div className="home-page-wrapper">
-      <div className="Home">
-        {/* your existing UI ... */}
+      <div className="logo home-logo">
+        <h1><span className="life">Life</span><span className="line">Line</span></h1>
+        <p>Emergency Alert System</p>
+      </div>
 
-        {/* -------------------------------------- */}
-        {/* 🟢 NEW: Active Alert Section */}
-        {/* -------------------------------------- */}
+      <div className="Home">
+        <div className="logo home-logo-mobile">
+          <h1><span className="life">Life</span><span className="line">Line</span></h1>
+          <p>Emergency Alert System</p>
+        </div>
+
+        <div className="home-header">
+          <h1>Welcome to Lifeline!</h1>
+          {user ? (
+            <p>
+              Welcome{" "}
+              {user.isAnonymous ? `Guest (Temporary ID: ${user.uid})` : user.email}
+            </p>
+          ) : (
+            <p>Loading user...</p>
+          )}
+
+          <p>
+            <span className="status-text">Status:</span>
+            <span className={`status-indicator ${
+              internetStatus === "Online" ? "status-online" : "status-offline"
+            }`}>
+              {internetStatus}
+            </span>
+          </p>
+        </div>
+
+        {/* MESSAGE INPUT */}
+        <div className="message-group">
+          <label><b>Message:</b></label>
+          <input
+            className="message-input"
+            type="text"
+            placeholder="Enter your message (default: HELP)"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+        </div>
+
+        {/* SEND HELP */}
+        <button className="btn btn-help" onClick={sendHelpRequest} disabled={isSending}>
+          {isSending ? "Sending..." : "Send Help"}
+        </button>
+
+        {/* STORE LOCATION */}
+        <button
+          className="btn btn-store"
+          onClick={handleShareLocation}
+          disabled={isFetchingLocation}
+        >
+          {isFetchingLocation ? "Getting Location..." : "Store Information"}
+        </button>
+
+        {/* LOCATION */}
+        <div className="location-display">
+          {isFetchingLocation && <p>Fetching current location...</p>}
+
+          {!isFetchingLocation && coords && !coords.error && (
+            <p>
+              <b>Last known Coordinates</b><br />
+              Latitude: {coords.latitude}, Longitude: {coords.longitude}
+            </p>
+          )}
+
+          {!isFetchingLocation && coords?.error && (
+            <p>Location Error: {coords.error}</p>
+          )}
+        </div>
+
+        {/* 🟢 ACTIVE ALERT BOX */}
         {!auth.currentUser?.isAnonymous && activeAlert && (
-          <div className="active-alert-box">
+          <div className="active-alert">
             <h3>Active Alert</h3>
             <p><b>Message:</b> {activeAlert.message}</p>
             {activeAlert.coords && (
               <p>
-                <b>Location:</b> {activeAlert.coords.latitude},{" "}
+                <b>Coords:</b> {activeAlert.coords.latitude}, {" "}
                 {activeAlert.coords.longitude}
               </p>
             )}
-            <button
-              className="btn btn-complete"
-              onClick={markAlertCompleted}
-            >
+            <button className="btn btn-complete" onClick={markAlertCompleted}>
               ✓ Mark as Completed
             </button>
           </div>
         )}
 
-        {/* rest of your buttons and layout... */}
+        {/* VIEW & LOGOUT BUTTONS */}
+        <button className="btn btn-map" onClick={() => navigate("/reports")}>
+          View Alert
+        </button>
+
+        <a className="btn btn-logout" onClick={() => navigate("/")}>
+          Log out
+        </a>
       </div>
     </div>
   );
