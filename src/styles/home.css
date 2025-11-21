@@ -264,6 +264,54 @@ body {
 .location-display p {
   margin: 0.5rem 0;
 }
+.active-alert {
+  width: 100%;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 0.9375rem;
+  border: 1px solid #e5e5e5;
+  color: var(--home-text);
+  font-size: clamp(0.9rem, 1.3vw, 1.0625rem);
+  line-height: 1.5;
+  box-sizing: border-box;
+  margin-top: 0.75rem;
+
+  /* Slight visual distinction */
+  border-left: 6px solid var(--home-blue);
+}
+
+.active-alert h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  font-weight: 600;
+  color: var(--home-blue-dark);
+}
+
+.active-alert p {
+  margin: 0.35rem 0;
+}
+
+.btn-complete {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.7rem;
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  font-weight: 600;
+  border-radius: 0.6875rem;
+  border: none;
+  cursor: pointer;
+  color: #ffffff;
+  background-color: var(--home-online);
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.btn-complete:hover {
+  background-color: #1f8a39;
+}
+
+.btn-complete:active {
+  transform: scale(0.98);
+}
 
 @media (max-width: 1200px) {
   .Home {

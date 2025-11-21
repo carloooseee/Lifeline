@@ -125,15 +125,40 @@ function Home() {
   }, [auth.currentUser]);
 
   // 🟢 NEW: Complete alert
-  const markAlertCompleted = async () => {
-    if (!activeAlert) return;
-    try {
-      await deleteDoc(doc(db, "Alerts", activeAlert.id));
-      alert("Task completed.");
-    } catch (err) {
-      console.error("Complete task error:", err);
+const markAlertCompleted = async () => {
+  try {
+    const current = getAuth().currentUser;
+    if (!current) {
+      alert("You must be signed in to complete the task.");
+      return;
     }
-  };
+    if (!activeAlert) return;
+
+    // Safety check: ensure doc has owner info
+    if (!activeAlert.userId) {
+      alert("This alert has no owner info — cannot complete.");
+      return;
+    }
+
+    // Confirm ownership
+    if (activeAlert.userId !== current.uid) {
+      alert("You are not authorized to complete this alert.");
+      return;
+    }
+
+    // Proceed to delete
+    await deleteDoc(doc(db, "Alerts", activeAlert.id));
+    alert("Task completed and removed.");
+  } catch (err) {
+    console.error("Complete task error:", err);
+    // Friendly user feedback:
+    if (err?.code === "permission-denied") {
+      alert("Failed to complete task: insufficient permissions. Contact admin.");
+    } else {
+      alert("Failed to complete task. See console for details.");
+    }
+  }
+};
 
   // AUTH + LOCATION EFFECT (SAME AS YOUR OLD CODE)
   useEffect(() => {
