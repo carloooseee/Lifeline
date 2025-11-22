@@ -108,7 +108,8 @@ function MapView({ alerts }) {
           <Popup>
             <strong>{alert.message}</strong> <br />
             From: {alert.user} <br />
-            Time: {alert.time ? alert.time.toLocaleString() : "No time"}
+            Time: {alert.time ? alert.time.toLocaleString() : "No time"} <br />
+            Urgency Level: {alert.urgency_level || "Not available"}
           </Popup>
         </Marker>
       ))}

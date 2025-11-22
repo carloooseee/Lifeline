@@ -10,6 +10,9 @@ import {
 } from "firebase/auth";
 import { app } from "../firebase"; // make sure firebase.js exports `app`
 import '../styles/login.css'
+import rescueImg from "../assets/Rescue.png";
+import eyeIcon from "../assets/eye.png";
+import googleIcon from "../assets/google-icon.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -80,7 +83,7 @@ export default function Login() {
         <p>Be safer today—with<br />reliable Lifeline</p>
       </div>
       <div className="hero-section">
-        <img src="/pictures/Rescue.png" />
+        <img src={rescueImg} />
       </div>
       <div className="login-panel">
         <h1>{isLogin ? "Nice to see you again!" : "Create your Lifeline account"}</h1>
@@ -106,7 +109,7 @@ export default function Login() {
               required
             />
             <img
-              src="/pictures/eye.png"
+              src={eyeIcon}
               alt="Toggle password visibility"
               className="password-toggle"
               onClick={() => setShowPassword(!showPassword)}
@@ -143,7 +146,7 @@ export default function Login() {
             <>
               <button type="button" onClick={handleGuest} className="guest-btn">Continue as Guest</button>
               <button type="button" onClick={handleGoogleLogin} className="google-btn">
-                <img src="/pictures/google-icon.png" alt="Google" />
+                <img src={googleIcon} alt="Google" />
                 Sign in with Google
               </button>
             </>

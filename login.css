@@ -372,6 +372,7 @@ input {
 @media (orientation: portrait) {
     .login-page {
         background-image: url('/pictures/Rescuemobile.png');
+        opacity: 0.5;
         background-size: cover;
         background-repeat: no-repeat;
         background-position: center;

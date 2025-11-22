@@ -1,5 +1,25 @@
+/* Hide scrollbars globally while maintaining scroll functionality */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
 html {
   font-size: clamp(12px, 1.11vw, 16px);
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+html::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 @media (max-width: 1920px) {
@@ -37,6 +57,12 @@ body {
   min-width: 320px;
   min-height: 100vh;
   width: 100%;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 h1 {
