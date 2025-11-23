@@ -131,7 +131,9 @@
   text-align: center;
   color: var(--eas-text);
 }
-
+.warningText{
+  text-align: center;
+}
 /* --- Filter Buttons --- */
 .filter {
   display: flex;

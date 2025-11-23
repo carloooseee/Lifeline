@@ -84,7 +84,7 @@ function History() {
           onClick={(e) => e.stopPropagation()}
         >
           <h2>Alert History</h2>
-
+          <p className="warningText">Classification results may sometimes be incorrect<br></br> Always rely on the full message for proper interpretation</p>
           {/* --- Filter Buttons --- */}
           <div className="filter">
             <button
