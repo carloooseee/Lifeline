@@ -2,7 +2,7 @@
   "name": "emergency-app",
   "homepage": "https://carloooseee.github.io/Lifeline/",
   "private": true,
-  "version": "1.0.1",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
