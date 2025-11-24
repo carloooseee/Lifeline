@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getAuth,
@@ -8,8 +8,8 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { app } from "../firebase"; // make sure firebase.js exports `app`
-import '../styles/login.css'
+import { app } from "../firebase";
+import "../styles/login.css";
 import rescueImg from "../assets/Rescue.png";
 import eyeIcon from "../assets/eye.png";
 import googleIcon from "../assets/google-icon.png";
@@ -25,6 +25,43 @@ export default function Login() {
   const navigate = useNavigate();
   const auth = getAuth(app);
 
+  // ------------------------------------------------------------------
+  // UTIL — Load saved anonymous user for offline login
+  // ------------------------------------------------------------------
+  const getSavedAnon = () => {
+    try {
+      const stored = localStorage.getItem("anonUser");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  // ------------------------------------------------------------------
+  // AUTO-GENERATE an anonymous UID when the user is ONLINE
+  // So offline guest login ALWAYS works later
+  // ------------------------------------------------------------------
+  useEffect(() => {
+    const saved = getSavedAnon();
+
+    if (navigator.onLine && !saved) {
+      signInAnonymously(auth)
+        .then((res) => {
+          localStorage.setItem(
+            "anonUser",
+            JSON.stringify({
+              uid: res.user.uid,
+              createdAt: Date.now(),
+            })
+          );
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  // ------------------------------------------------------------------
+  // GOOGLE LOGIN
+  // ------------------------------------------------------------------
   const handleGoogleLogin = async () => {
     setError(null);
     try {
@@ -39,6 +76,9 @@ export default function Login() {
     }
   };
 
+  // ------------------------------------------------------------------
+  // EMAIL LOGIN
+  // ------------------------------------------------------------------
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -49,10 +89,12 @@ export default function Login() {
     }
   };
 
+  // ------------------------------------------------------------------
+  // SIGN UP NEW USER
+  // ------------------------------------------------------------------
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    // Simple password check
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -67,31 +109,72 @@ export default function Login() {
     }
   };
 
+  // ------------------------------------------------------------------
+  // GUEST LOGIN (ONLINE + OFFLINE SUPPORT)
+  // ------------------------------------------------------------------
   const handleGuest = async () => {
+    setError(null);
+
+    const saved = getSavedAnon();
+
+    // =============================
+    // OFFLINE MODE
+    // =============================
+    if (!navigator.onLine) {
+      if (saved) {
+        console.log("Offline login using saved anonymous uid:", saved.uid);
+        navigate("/home");
+        return;
+      } else {
+        setError("Guest mode requires one initial online setup.");
+        return;
+      }
+    }
+
+    // =============================
+    // ONLINE MODE (create or use existing)
+    // =============================
     try {
-      await signInAnonymously(auth);
+      const userCred = await signInAnonymously(auth);
+
+      localStorage.setItem(
+        "anonUser",
+        JSON.stringify({
+          uid: userCred.user.uid,
+          createdAt: Date.now(),
+        })
+      );
+
       navigate("/home");
     } catch (err) {
-      setError(err.message);
+      setError("Guest login failed: " + err.message);
     }
   };
 
+  // ------------------------------------------------------------------
+  // RENDER UI
+  // ------------------------------------------------------------------
   return (
     <div className="login-page">
       <div className="logo">
-        <h1><span className="life">Life</span><span className="line">Line</span></h1>
+        <h1>
+          <span className="life">Life</span>
+          <span className="line">Line</span>
+        </h1>
         <p>Be safer today—with<br />reliable Lifeline</p>
       </div>
+
       <div className="hero-section">
-        <img src={rescueImg} />
+        <img src={rescueImg} alt="Rescue" />
       </div>
+
       <div className="login-panel">
         <h1>{isLogin ? "Nice to see you again!" : "Create your Lifeline account"}</h1>
-        {error && (
-          <p className="error">{error}</p>
-        )}
+
+        {error && <p className="error">{error}</p>}
+
         <form onSubmit={isLogin ? handleLogin : handleSignup}>
-          <label className="input-label">{isLogin ? "Login" : "Email"}</label>
+          <label className="input-label">{isLogin ? "Email" : "Email"}</label>
           <input
             type="email"
             placeholder="Email or phone number"
@@ -99,6 +182,7 @@ export default function Login() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+
           <label className="input-label">Password</label>
           <div className="password-input-container">
             <input
@@ -110,11 +194,12 @@ export default function Login() {
             />
             <img
               src={eyeIcon}
-              alt="Toggle password visibility"
+              alt="Toggle password"
               className="password-toggle"
               onClick={() => setShowPassword(!showPassword)}
             />
           </div>
+
           {!isLogin && (
             <>
               <label className="input-label">Confirm Password</label>
@@ -127,6 +212,7 @@ export default function Login() {
               />
             </>
           )}
+
           {isLogin && (
             <div className="form-options">
               <label className="switch-label">
@@ -138,23 +224,35 @@ export default function Login() {
                 <span className="slider"></span>
                 Remember me
               </label>
-              <a href="#" className="forgot-password">Forgot password?</a>
+              <a href="#" className="forgot-password">
+                Forgot password?
+              </a>
             </div>
           )}
-          <button type="submit" className="sign-in-btn">{isLogin ? "Sign in" : "Sign up"}</button>
+
+          <button type="submit" className="sign-in-btn">
+            {isLogin ? "Sign in" : "Sign up"}
+          </button>
+
           {isLogin && (
             <>
-              <button type="button" onClick={handleGuest} className="guest-btn">Continue as Guest</button>
-              <button type="button" onClick={handleGoogleLogin} className="google-btn">
+              <button type="button" className="guest-btn" onClick={handleGuest}>
+                Continue as Guest
+              </button>
+
+              <button type="button" className="google-btn" onClick={handleGoogleLogin}>
                 <img src={googleIcon} alt="Google" />
                 Sign in with Google
               </button>
             </>
           )}
         </form>
+
         <p className="signup-link">
           {isLogin ? "Don’t have an account?" : "Already have an account?"}{" "}
-          <a href="#" onClick={() => setIsLogin(!isLogin)}>{isLogin ? "Sign up now" : "Sign in now"}</a>
+          <a href="#" onClick={() => setIsLogin(!isLogin)}>
+            {isLogin ? "Sign up now" : "Sign in now"}
+          </a>
         </p>
       </div>
     </div>
