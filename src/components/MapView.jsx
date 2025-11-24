@@ -6,13 +6,9 @@ import "leaflet/dist/leaflet.css";
 const formatTime = (t) => {
   if (!t) return "No time";
 
-  // Firestore Timestamp
   if (t.toDate) return t.toDate().toLocaleString();
-
-  // JS Date
   if (t instanceof Date) return t.toLocaleString();
 
-  // ISO string fallback
   try {
     return new Date(t).toLocaleString();
   } catch {
@@ -60,7 +56,10 @@ function RecenterButton({ currentPosition }) {
   const handleRecenter = (e) => {
     e.stopPropagation();
     if (currentPosition) {
-      map.flyTo([currentPosition.latitude, currentPosition.longitude], map.getZoom());
+      map.flyTo(
+        [currentPosition.latitude, currentPosition.longitude],
+        map.getZoom()
+      );
     }
   };
 
@@ -75,7 +74,6 @@ function RecenterButton({ currentPosition }) {
     >
       <button
         onClick={handleRecenter}
-        className="btn btn-light"
         style={{
           boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
           borderRadius: "50%",
@@ -107,8 +105,9 @@ function RecenterButton({ currentPosition }) {
 }
 
 function MapView({ alerts, focusCoords, focusedAlertId }) {
-  const fallbackPosition = { latitude: 14.386696, longitude: 120.895081 };
+  const fallbackPosition = { latitude: 14.599512, longitude: 120.984222 }; // Manila
   const [currentPosition, setCurrentPosition] = useState(null);
+  const [isFallback, setIsFallback] = useState(false); // NEW FLAG
   const markerRefs = React.useRef({});
 
   useEffect(() => {
@@ -121,18 +120,20 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
               longitude: position.coords.longitude,
             };
             setCurrentPosition(coords);
+            setIsFallback(false);
 
-            // Save silently
             localStorage.setItem("lastLocation", JSON.stringify(coords));
           },
           (error) => {
-            console.warn("Could not get current position:", error.message);
+            console.warn("GPS Error:", error.message);
 
             const stored = localStorage.getItem("lastLocation");
             if (stored) {
               setCurrentPosition(JSON.parse(stored));
+              setIsFallback(true);
             } else {
               setCurrentPosition(fallbackPosition);
+              setIsFallback(true);
             }
           },
           { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
@@ -141,8 +142,10 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
         const stored = localStorage.getItem("lastLocation");
         if (stored) {
           setCurrentPosition(JSON.parse(stored));
+          setIsFallback(true);
         } else {
           setCurrentPosition(fallbackPosition);
+          setIsFallback(true);
         }
       }
     };
@@ -152,8 +155,7 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
 
   useEffect(() => {
     if (focusedAlertId && markerRefs.current[focusedAlertId]) {
-      const marker = markerRefs.current[focusedAlertId];
-      marker.openPopup();
+      markerRefs.current[focusedAlertId].openPopup();
     }
   }, [focusedAlertId]);
 
@@ -172,45 +174,47 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
         attribution="&copy; OpenStreetMap contributors"
       />
 
-      {/* Auto recenter */}
       {(focusCoords || currentPosition) && (
         <RecenterMap coords={focusCoords || currentPosition} />
       )}
 
-      {/* Manual recenter button */}
-      <RecenterButton currentPosition={currentPosition || fallbackPosition} />
-
-      {/* Red marker for current position */}
+      <RecenterButton
+        currentPosition={currentPosition || fallbackPosition}
+      />
       {currentPosition && (
         <Marker
-          position={[currentPosition.latitude, currentPosition.longitude]}
+          position={[
+            currentPosition.latitude,
+            currentPosition.longitude,
+          ]}
           icon={redIcon}
           zIndexOffset={10000}
         >
           <Popup>
-            📍 You are here <br />
-            ({currentPosition.latitude.toFixed(4)},{" "}
-            {currentPosition.longitude.toFixed(4)})
+            {isFallback ? (
+              <>
+                ⚠️ <b>Fallback position</b> <br />
+                GPS failed to get your location. <br />
+                ({currentPosition.latitude.toFixed(4)},{" "}
+                {currentPosition.longitude.toFixed(4)})
+              </>
+            ) : (
+              <>
+                📍 You are here <br />
+                ({currentPosition.latitude.toFixed(4)},{" "}
+                {currentPosition.longitude.toFixed(4)})
+              </>
+            )}
           </Popup>
         </Marker>
       )}
-
-      {/* Alert markers */}
       {alerts.map((alert) => {
         const lat =
-          alert?.coords?.latitude ??
-          alert?.coords?.lat ??
-          null;
-
+          alert?.coords?.latitude ?? alert?.coords?.lat ?? null;
         const lng =
-          alert?.coords?.longitude ??
-          alert?.coords?.lng ??
-          null;
+          alert?.coords?.longitude ?? alert?.coords?.lng ?? null;
 
-        if (typeof lat !== "number" || typeof lng !== "number") {
-          console.warn("Skipping invalid alert marker:", alert);
-          return null;
-        }
+        if (typeof lat !== "number" || typeof lng !== "number") return null;
 
         return (
           <Marker
@@ -223,6 +227,7 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
               <strong>{alert.message}</strong> <br />
               From: {alert.user} <br />
               Time: {formatTime(alert.time)} <br />
+              Category: {alert.category || "Not available"} <br />
               Urgency Level: {alert.urgency_level || "Not available"}
             </Popup>
           </Marker>
