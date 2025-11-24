@@ -11,6 +11,8 @@ function History() {
   const [alerts, setAlerts] = useState([]);
   const [filter, setFilter] = useState("all");
   const [showPopup, setShowPopup] = useState(false);
+  const [focusCoords, setFocusCoords] = useState(null);
+  const [focusedAlertId, setFocusedAlertId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,6 +31,14 @@ function History() {
             urgency_level: data.urgency_level || "not available",
           };
         });
+
+        // Sort by time descending (Newest first)
+        alertsData.sort((a, b) => {
+          const timeA = a.time ? a.time.getTime() : 0;
+          const timeB = b.time ? b.time.getTime() : 0;
+          return timeB - timeA;
+        });
+
         setAlerts(alertsData);
       } catch (error) {
         console.error("Error fetching alerts:", error);
@@ -58,7 +68,11 @@ function History() {
     <div className="history-page">
       {/* Fullscreen map as background */}
       <div className="map-container">
-        <MapView alerts={filterAlerts(alerts)} />
+        <MapView
+          alerts={filterAlerts(alerts)}
+          focusCoords={focusCoords}
+          focusedAlertId={focusedAlertId}
+        />
       </div>
 
       {/* Overlay for buttons */}
@@ -114,7 +128,17 @@ function History() {
             ) : (
               <ol>
                 {filterAlerts(alerts).map((alert) => (
-                  <li key={alert.id}>
+                  <li
+                    key={alert.id}
+                    onClick={() => {
+                      if (alert.coords && alert.coords.latitude) {
+                        setFocusCoords(alert.coords);
+                        setFocusedAlertId(alert.id);
+                        setShowPopup(false);
+                      }
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
                     <strong>{alert.message}</strong>
                     <div className="details">
                       Category: {alert.category} <br />

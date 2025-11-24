@@ -6,13 +6,13 @@ import "leaflet/dist/leaflet.css";
 // Custom red marker icon
 const redIcon = new L.Icon({
   iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
   shadowUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+  iconSize: [30, 48], // Approx 1.2x bigger than blue (25x41)
+  iconAnchor: [0, 48], // Shifted further right to reveal half of underlying blue marker
+  popupAnchor: [15, -40],
+  shadowSize: [48, 48],
 });
 
 const blueIcon = new L.Icon({
@@ -31,15 +31,71 @@ function RecenterMap({ coords }) {
   const map = useMap();
   useEffect(() => {
     if (coords && coords.latitude && coords.longitude) {
-      map.setView([coords.latitude, coords.longitude], 15);
+      map.flyTo([coords.latitude, coords.longitude], 18); // Zoom in closer on click
     }
   }, [coords, map]);
   return null;
 }
 
-function MapView({ alerts }) {
+function RecenterButton({ currentPosition }) {
+  const map = useMap();
+
+  const handleRecenter = (e) => {
+    e.stopPropagation(); // Prevent map click propagation
+    if (currentPosition) {
+      map.flyTo(
+        [currentPosition.latitude, currentPosition.longitude],
+        map.getZoom()
+      );
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        bottom: "20px",
+        right: "20px",
+        zIndex: 1000,
+      }}
+    >
+      <button
+        onClick={handleRecenter}
+        className="btn btn-light"
+        style={{
+          boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+          borderRadius: "50%",
+          width: "40px",
+          height: "40px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 0,
+          border: "none",
+          backgroundColor: "white",
+          cursor: "pointer"
+        }}
+        title="Recenter to my location"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          fill="currentColor"
+          viewBox="0 0 16 16"
+          style={{ color: "#333" }}
+        >
+          <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function MapView({ alerts, focusCoords, focusedAlertId }) {
   const fallbackPosition = { latitude: 14.386696, longitude: 120.895081 };
   const [currentPosition, setCurrentPosition] = useState(null);
+  const markerRefs = React.useRef({});
 
   useEffect(() => {
     const getLocation = () => {
@@ -80,6 +136,14 @@ function MapView({ alerts }) {
     getLocation();
   }, []);
 
+  // Auto-open popup when focusedAlertId changes
+  useEffect(() => {
+    if (focusedAlertId && markerRefs.current[focusedAlertId]) {
+      const marker = markerRefs.current[focusedAlertId];
+      marker.openPopup();
+    }
+  }, [focusedAlertId]);
+
   const defaultCenter = currentPosition
     ? [currentPosition.latitude, currentPosition.longitude]
     : [14.5995, 120.9842]; // Manila fallback while loading
@@ -87,7 +151,7 @@ function MapView({ alerts }) {
   return (
     <MapContainer
       center={defaultCenter}
-      zoom={25}
+      zoom={15}
       style={{ height: "100%", width: "100%" }}
     >
       <TileLayer
@@ -95,14 +159,20 @@ function MapView({ alerts }) {
         attribution="&copy; OpenStreetMap contributors"
       />
 
-      {/* Recenter map when location changes */}
-      {currentPosition && <RecenterMap coords={currentPosition} />}
+      {/* Recenter map when location changes initially OR when focusCoords changes */}
+      {(focusCoords || currentPosition) && (
+        <RecenterMap coords={focusCoords || currentPosition} />
+      )}
+
+      {/* Manual Recenter Button */}
+      <RecenterButton currentPosition={currentPosition || fallbackPosition} />
 
       {/* Red pin for current or fallback location */}
       {currentPosition && (
         <Marker
           position={[currentPosition.latitude, currentPosition.longitude]}
           icon={redIcon}
+          zIndexOffset={10000} // Ensure it stays on top
         >
           <Popup>
             📍 You are here <br />
@@ -136,6 +206,7 @@ function MapView({ alerts }) {
             key={alert.id}
             position={[lat, lng]}
             icon={blueIcon}
+            ref={(el) => (markerRefs.current[alert.id] = el)}
           >
             <Popup>
               <strong>{alert.message}</strong> <br />

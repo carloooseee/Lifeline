@@ -18,7 +18,8 @@
   position: relative;
   width: 100vw;
   height: 100vh;
-  overflow: hidden; /* Prevents scrollbars */
+  overflow: hidden;
+  /* Prevents scrollbars */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
 }
@@ -29,7 +30,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1; /* Lowest layer */
+  z-index: 1;
+  /* Lowest layer */
 }
 
 /* --- Leaflet Map Specific --- */
@@ -46,7 +48,8 @@
   left: 0;
   width: 100%;
   padding: 1rem;
-  z-index: 1000; /* Sits above the map */
+  z-index: 1000;
+  /* Sits above the map */
   box-sizing: border-box;
 
   /* This pushes the child .top-buttons div to the right */
@@ -84,8 +87,10 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
-  z-index: 2000; /* Highest layer */
+  background-color: rgba(0, 0, 0, 0.5);
+  /* Semi-transparent black */
+  z-index: 2000;
+  /* Highest layer */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -112,7 +117,8 @@
   padding: 1.5rem;
   width: 100%;
   max-width: 500px;
-  max-height: 80vh; /* Prevents modal from being too tall */
+  max-height: 80vh;
+  /* Prevents modal from being too tall */
   display: flex;
   flex-direction: column;
 
@@ -131,9 +137,11 @@
   text-align: center;
   color: var(--eas-text);
 }
-.warningText{
+
+.warningText {
   text-align: center;
 }
+
 /* --- Filter Buttons --- */
 .filter {
   display: flex;
@@ -185,9 +193,18 @@
 .alertBox li {
   padding: 1rem;
   border-bottom: 1px solid #eee;
+  transition: background-color 0.2s ease;
+  /* Smooth transition for hover */
 }
+
 .alertBox li:last-child {
   border-bottom: none;
+}
+
+/* Hover effect for alert items */
+.alertBox li:hover {
+  background-color: #f0f0f0;
+  cursor: pointer;
 }
 
 .alertBox .details {
