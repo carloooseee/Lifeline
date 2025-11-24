@@ -30,39 +30,54 @@ function Home() {
   const [isSending, setIsSending] = useState(false);
 
   const [activeAlert, setActiveAlert] = useState(null);
-
   const navigate = useNavigate();
   const auth = getAuth(app);
 
+  // ------------------------------------------------------------------
+  // 🔥 THE FIX: SIMPLE, RELIABLE, PWA-SAFE ONLINE CHECK
+  // ------------------------------------------------------------------
+  const isReallyOnline = () => navigator.onLine;
+
+  // ------------------------------------------------------------------
+  // Save last known location locally
+  // ------------------------------------------------------------------
   const saveDataToStorage = (locationData) => {
     const dataToSave = {
       user: user
         ? user.isAnonymous
-          ? `Guest (Temporary ID: ${user.uid})`
+          ? `Guest (${user.uid})`
           : user.email
         : "Unknown User",
       coords: locationData.coords,
-      message: message.trim() === "" ? "HELP" : message.trim(),
+      message: message.trim() || "HELP",
       time: new Date().toISOString(),
     };
+
     localStorage.setItem("lastLocation", JSON.stringify(dataToSave));
   };
 
+  // ------------------------------------------------------------------
+  // Get current location for UI
+  // ------------------------------------------------------------------
   const fetchCurrentLocationForUI = () => {
     setIsFetchingLocation(true);
+
     if (!navigator.geolocation) {
-      setCoords({ error: "Geolocation is not supported by your browser." });
+      setCoords({ error: "Geolocation not supported." });
       setIsFetchingLocation(false);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const newCoords = { latitude, longitude };
+        const newCoords = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        };
+
         setCoords(newCoords);
-        setIsFetchingLocation(false);
         saveDataToStorage({ coords: newCoords });
+        setIsFetchingLocation(false);
       },
       (err) => {
         console.error("UI Location Error:", err.message);
@@ -71,27 +86,35 @@ function Home() {
     );
   };
 
+  // ------------------------------------------------------------------
+  // Send queued alert once connection is restored
+  // ------------------------------------------------------------------
   const processPendingAlert = async (currentUser) => {
-    const pendingAlert = localStorage.getItem("pendingAlert");
-    if (pendingAlert && navigator.onLine) {
-      try {
-        const alertData = JSON.parse(pendingAlert);
-        alertData.user = currentUser
-          ? currentUser.isAnonymous
-            ? `Guest (${currentUser.uid})`
-            : currentUser.email
-          : "Unknown User";
+    const pending = localStorage.getItem("pendingAlert");
+    if (!pending) return;
+    if (!isReallyOnline()) return;
 
-        await addDoc(collection(db, "Alerts"), alertData);
-        localStorage.removeItem("pendingAlert");
-        alert("Pending alert sent!");
-      } catch (error) {
-        console.error("Pending alert error:", error);
-      }
+    try {
+      const alertData = JSON.parse(pending);
+
+      alertData.user = currentUser
+        ? currentUser.isAnonymous
+          ? `Guest (${currentUser.uid})`
+          : currentUser.email
+        : "Unknown User";
+
+      await addDoc(collection(db, "Alerts"), alertData);
+
+      localStorage.removeItem("pendingAlert");
+      alert("Queued alert was sent successfully!");
+    } catch (err) {
+      console.error("Failed sending queued alert:", err);
     }
   };
 
-  // LISTEN FOR ACTIVE ALERT
+  // ------------------------------------------------------------------
+  // Listen for active alert (not for guests)
+  // ------------------------------------------------------------------
   useEffect(() => {
     if (!auth.currentUser || auth.currentUser.isAnonymous) {
       setActiveAlert(null);
@@ -106,53 +129,44 @@ function Home() {
       limit(1)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        setActiveAlert({
-          id: snapshot.docs[0].id,
-          ...snapshot.docs[0].data(),
-        });
+    const unsub = onSnapshot(q, (snap) => {
+      if (!snap.empty) {
+        setActiveAlert({ id: snap.docs[0].id, ...snap.docs[0].data() });
       } else {
         setActiveAlert(null);
       }
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   }, [auth.currentUser]);
 
-  // COMPLETE ALERT
+  // ------------------------------------------------------------------
+  // Complete alert
+  // ------------------------------------------------------------------
   const markAlertCompleted = async () => {
     try {
-      const current = getAuth().currentUser;
-      if (!current) {
-        alert("You must be signed in to complete the task.");
-        return;
-      }
+      const current = auth.currentUser;
+
+      if (!current) return alert("Not signed in.");
       if (!activeAlert) return;
-
-      if (!activeAlert.userId) {
-        alert("This alert has no owner info.");
-        return;
-      }
-
-      if (activeAlert.userId !== current.uid) {
-        alert("You are not authorized to complete this alert.");
-        return;
-      }
+      if (activeAlert.userId !== current.uid)
+        return alert("You are not allowed to complete this alert.");
 
       await deleteDoc(doc(db, "Alerts", activeAlert.id));
-      alert("Task completed and removed.");
+      alert("Task completed.");
     } catch (err) {
       console.error("Complete task error:", err);
-      alert("Failed to complete task.");
+      alert("Error completing task.");
     }
   };
 
-  // AUTH + STATUS
+  // ------------------------------------------------------------------
+  // Auth + online listeners
+  // ------------------------------------------------------------------
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      if (currentUser && navigator.onLine) processPendingAlert(currentUser);
+    const unsub = onAuthStateChanged(auth, (currUser) => {
+      setUser(currUser);
+      if (currUser) processPendingAlert(currUser);
     });
 
     fetchCurrentLocationForUI();
@@ -174,91 +188,84 @@ function Home() {
     };
   }, [user]);
 
-  const handleShareLocation = () => {
-    fetchCurrentLocationForUI();
-    alert("Updating location...");
-  };
-
+  // ------------------------------------------------------------------
+  // Send help alert
+  // ------------------------------------------------------------------
   const sendHelpRequest = async () => {
-    // --- LOCAL RATE LIMIT: max 5 alerts per hour ---
+    // --- Rate limit (local only)
     const now = Date.now();
     const oneHour = 60 * 60 * 1000;
-
     let history = JSON.parse(localStorage.getItem("alertHistory")) || [];
-    history = history.filter(t => now - t < oneHour);
 
-    if (history.length >= 5) {
-      alert("You are sending alerts too quickly. Please wait.");
-      return;
-    }
+    history = history.filter((t) => now - t < oneHour);
+    if (history.length >= 5)
+      return alert("Slow down: max 5 alerts per hour.");
 
     history.push(now);
     localStorage.setItem("alertHistory", JSON.stringify(history));
 
-    // --- 10 SECOND COOLDOWN ---
-    const lastSend = localStorage.getItem("lastSendTimestamp");
-    if (lastSend && now - Number(lastSend) < 10 * 1000) {
-      const secondsLeft = Math.ceil((10 * 1000 - (now - Number(lastSend))) / 1000);
-      alert(`Please wait ${secondsLeft} more second(s) before sending again.`);
-      return;
+    // --- Cooldown
+    const lastSend = Number(localStorage.getItem("lastSendTimestamp"));
+    if (lastSend && now - lastSend < 10000) {
+      const secs = Math.ceil((10000 - (now - lastSend)) / 1000);
+      return alert(`Wait ${secs}s before sending again.`);
     }
     localStorage.setItem("lastSendTimestamp", now.toString());
-    // -----------------------------------------
 
-    setIsSending(true);
-    const finalMessage = message.trim() === "" ? "HELP" : message.trim();
+    // ------------------------------------------------------------------
+    // Prepare alert data
+    // ------------------------------------------------------------------
+    let category = "Not Available";
+    let urgency_level = "Not Available";
 
-    const sendAlert = async (locationData) => {
-      let category = "Not Available";
-      let urgency_level = "Not Available";
+    const finalMessage = message.trim() || "HELP";
 
-      try {
-        const mlResults = await prioritizeAlert(finalMessage);
-        category = mlResults.category;
-        urgency_level = mlResults.urgency_level;
-      } catch {}
+    try {
+      const ml = await prioritizeAlert(finalMessage);
+      category = ml.category;
+      urgency_level = ml.urgency_level;
+    } catch {}
 
-      const alertData = {
-        userId: auth.currentUser?.uid || null,
-        user: user
-          ? user.isAnonymous
-            ? `Guest (${user.uid})`
-            : user.email
-          : "Unknown User",
-        coords: locationData,
-        message: finalMessage,
-        time: new Date().toISOString(),
-        category,
-        urgency_level,
-        alertCompleted: false,
-      };
-
-      try {
-        await addDoc(collection(db, "Alerts"), alertData);
-        alert("Help request sent!");
-        setMessage("");
-      } catch {
-        localStorage.setItem("pendingAlert", JSON.stringify(alertData));
-        alert("Offline, alert queued locally.");
-      }
-
-      setIsSending(false);
+    const alertData = {
+      userId: auth.currentUser?.uid || null,
+      user: user
+        ? user.isAnonymous
+          ? `Guest (${user.uid})`
+          : user.email
+        : "Unknown User",
+      coords: coords,
+      message: finalMessage,
+      time: new Date().toISOString(),
+      category,
+      urgency_level,
+      alertCompleted: false,
     };
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const data = {
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        };
-        setCoords(data);
-        saveDataToStorage({ coords: data });
-        sendAlert(data);
-      },
-      () => {
-        sendAlert(coords || { error: "No location available" });
-      }
-    );
+    setIsSending(true);
+
+    // ------------------------------------------------------------------
+    // 🔥 FIXED OFFLINE BEHAVIOR — NO SPAM, NO RETRIES, QUEUE INSTANTLY
+    // ------------------------------------------------------------------
+    if (!isReallyOnline()) {
+      localStorage.setItem("pendingAlert", JSON.stringify(alertData));
+      alert("Offline → Alert saved locally. Will send when online.");
+      setIsSending(false);
+      return;
+    }
+
+    // ------------------------------------------------------------------
+    // ONLINE → Send to Firestore
+    // ------------------------------------------------------------------
+    try {
+      await addDoc(collection(db, "Alerts"), alertData);
+      alert("Help request sent!");
+      setMessage("");
+    } catch (err) {
+      localStorage.setItem("pendingAlert", JSON.stringify(alertData));
+      alert("Network issue → Alert queued locally.");
+    }
+
+    setIsSending(false);
   };
 
   return (
@@ -325,7 +332,7 @@ function Home() {
 
         <button
           className="btn btn-store"
-          onClick={handleShareLocation}
+          onClick={() => fetchCurrentLocationForUI()}
           disabled={isFetchingLocation}
         >
           {isFetchingLocation ? "Getting Location..." : "Store Information"}
@@ -333,12 +340,14 @@ function Home() {
 
         <div className="location-display">
           {isFetchingLocation && <p>Fetching current location...</p>}
+
           {!isFetchingLocation && coords && !coords.error && (
             <p>
               <b>Last known Coordinates</b><br />
               Latitude: {coords.latitude}, Longitude: {coords.longitude}
             </p>
           )}
+
           {!isFetchingLocation && coords?.error && (
             <p>Location Error: {coords.error}</p>
           )}
@@ -354,6 +363,7 @@ function Home() {
                 {activeAlert.coords.longitude}
               </p>
             )}
+
             <button className="btn btn-complete" onClick={markAlertCompleted}>
               ✓ Mark as Completed
             </button>
