@@ -3,9 +3,6 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// -----------------------------
-// ICONS
-// -----------------------------
 const redIcon = new L.Icon({
   iconUrl:
     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
@@ -28,9 +25,6 @@ const blueIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-// -----------------------------
-// Recenter Component
-// -----------------------------
 function RecenterMap({ coords }) {
   const map = useMap();
 
@@ -43,9 +37,6 @@ function RecenterMap({ coords }) {
   return null;
 }
 
-// -----------------------------
-// Recenter Button
-// -----------------------------
 function RecenterButton({ currentPosition }) {
   const map = useMap();
 
@@ -102,18 +93,12 @@ function RecenterButton({ currentPosition }) {
   );
 }
 
-// -----------------------------
-// MAIN MAP COMPONENT
-// -----------------------------
 function MapView({ alerts, focusCoords, focusedAlertId }) {
   const [currentPosition, setCurrentPosition] = useState(null);
   const [locationError, setLocationError] = useState(false);
 
   const markerRefs = useRef({});
 
-  // -----------------------------------------------------
-  // GET LOCATION (NO FALLBACKS, NO HOME LOCATION)
-  // -----------------------------------------------------
   useEffect(() => {
     const getLocation = () => {
       if (!navigator.geolocation) {
@@ -144,18 +129,12 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
     getLocation();
   }, []);
 
-  // -----------------------------------------------------
-  // Auto-open popup when clicking alerts on the list
-  // -----------------------------------------------------
   useEffect(() => {
     if (focusedAlertId && markerRefs.current[focusedAlertId]) {
       markerRefs.current[focusedAlertId].openPopup();
     }
   }, [focusedAlertId]);
 
-  // -----------------------------------------------------
-  // MAP START CENTER
-  // -----------------------------------------------------
   const defaultCenter = focusCoords
     ? [focusCoords.latitude, focusCoords.longitude]
     : currentPosition
