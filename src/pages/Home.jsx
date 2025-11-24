@@ -33,14 +33,8 @@ function Home() {
   const navigate = useNavigate();
   const auth = getAuth(app);
 
-  // ------------------------------------------------------------------
-  // 🔥 THE FIX: SIMPLE, RELIABLE, PWA-SAFE ONLINE CHECK
-  // ------------------------------------------------------------------
   const isReallyOnline = () => navigator.onLine;
 
-  // ------------------------------------------------------------------
-  // Save last known location locally
-  // ------------------------------------------------------------------
   const saveDataToStorage = (locationData) => {
     const dataToSave = {
       user: user
@@ -56,9 +50,6 @@ function Home() {
     localStorage.setItem("lastLocation", JSON.stringify(dataToSave));
   };
 
-  // ------------------------------------------------------------------
-  // Get current location for UI
-  // ------------------------------------------------------------------
   const fetchCurrentLocationForUI = () => {
     setIsFetchingLocation(true);
 
@@ -86,9 +77,6 @@ function Home() {
     );
   };
 
-  // ------------------------------------------------------------------
-  // Send queued alert once connection is restored
-  // ------------------------------------------------------------------
   const processPendingAlert = async (currentUser) => {
     const pending = localStorage.getItem("pendingAlert");
     if (!pending) return;
@@ -112,9 +100,6 @@ function Home() {
     }
   };
 
-  // ------------------------------------------------------------------
-  // Listen for active alert (not for guests)
-  // ------------------------------------------------------------------
   useEffect(() => {
     if (!auth.currentUser || auth.currentUser.isAnonymous) {
       setActiveAlert(null);
@@ -140,9 +125,6 @@ function Home() {
     return () => unsub();
   }, [auth.currentUser]);
 
-  // ------------------------------------------------------------------
-  // Complete alert
-  // ------------------------------------------------------------------
   const markAlertCompleted = async () => {
     try {
       const current = auth.currentUser;
@@ -160,9 +142,6 @@ function Home() {
     }
   };
 
-  // ------------------------------------------------------------------
-  // Auth + online listeners
-  // ------------------------------------------------------------------
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (currUser) => {
       setUser(currUser);
@@ -188,9 +167,6 @@ function Home() {
     };
   }, [user]);
 
-  // ------------------------------------------------------------------
-  // Send help alert
-  // ------------------------------------------------------------------
   const sendHelpRequest = async () => {
     // --- Rate limit (local only)
     const now = Date.now();
@@ -212,9 +188,6 @@ function Home() {
     }
     localStorage.setItem("lastSendTimestamp", now.toString());
 
-    // ------------------------------------------------------------------
-    // Prepare alert data
-    // ------------------------------------------------------------------
     let category = "Not Available";
     let urgency_level = "Not Available";
 
@@ -243,9 +216,6 @@ function Home() {
 
     setIsSending(true);
 
-    // ------------------------------------------------------------------
-    // 🔥 FIXED OFFLINE BEHAVIOR — NO SPAM, NO RETRIES, QUEUE INSTANTLY
-    // ------------------------------------------------------------------
     if (!isReallyOnline()) {
       localStorage.setItem("pendingAlert", JSON.stringify(alertData));
       alert("Offline → Alert saved locally. Will send when online.");
@@ -253,9 +223,6 @@ function Home() {
       return;
     }
 
-    // ------------------------------------------------------------------
-    // ONLINE → Send to Firestore
-    // ------------------------------------------------------------------
     try {
       await addDoc(collection(db, "Alerts"), alertData);
       alert("Help request sent!");
