@@ -14,6 +14,7 @@ const redIcon = new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
+
 const blueIcon = new L.Icon({
   iconUrl:
     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
@@ -29,7 +30,7 @@ const blueIcon = new L.Icon({
 function RecenterMap({ coords }) {
   const map = useMap();
   useEffect(() => {
-    if (coords) {
+    if (coords && coords.latitude && coords.longitude) {
       map.setView([coords.latitude, coords.longitude], 15);
     }
   }, [coords, map]);
@@ -49,12 +50,14 @@ function MapView({ alerts }) {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
             };
-            // ✅ only set state — don’t write to localStorage
             setCurrentPosition(coords);
+
+            // Save last known location silently
+            localStorage.setItem("lastLocation", JSON.stringify(coords));
           },
           (error) => {
             console.warn("Could not get current position:", error.message);
-            // ✅ read only
+
             const stored = localStorage.getItem("lastLocation");
             if (stored) {
               setCurrentPosition(JSON.parse(stored));
@@ -110,20 +113,39 @@ function MapView({ alerts }) {
       )}
 
       {/* Show pins from alerts */}
-      {alerts.map((alert) => (
-        <Marker
-          key={alert.id}
-          position={[alert.coords.latitude, alert.coords.longitude]}
-          icon={blueIcon}
-        >
-          <Popup>
-            <strong>{alert.message}</strong> <br />
-            From: {alert.user} <br />
-            Time: {alert.time ? alert.time.toLocaleString() : "No time"} <br />
-            Urgency Level: {alert.urgency_level || "Not available"}
-          </Popup>
-        </Marker>
-      ))}
+      {alerts.map((alert) => {
+        // FIX: read coords safely
+        const lat =
+          alert?.coords?.latitude ??
+          alert?.coords?.lat ??
+          null;
+
+        const lng =
+          alert?.coords?.longitude ??
+          alert?.coords?.lng ??
+          null;
+
+        // FIX: skip invalid markers (prevents crash)
+        if (typeof lat !== "number" || typeof lng !== "number") {
+          console.warn("Skipping invalid alert marker:", alert);
+          return null;
+        }
+
+        return (
+          <Marker
+            key={alert.id}
+            position={[lat, lng]}
+            icon={blueIcon}
+          >
+            <Popup>
+              <strong>{alert.message}</strong> <br />
+              From: {alert.user} <br />
+              Time: {alert.time ? alert.time.toLocaleString() : "No time"} <br />
+              Urgency Level: {alert.urgency_level || "Not available"}
+            </Popup>
+          </Marker>
+        );
+      })}
     </MapContainer>
   );
 }
