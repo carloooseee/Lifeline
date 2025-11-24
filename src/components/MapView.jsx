@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Custom red marker icon
+// -----------------------------
+// ICONS
+// -----------------------------
 const redIcon = new L.Icon({
   iconUrl:
     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
   shadowUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-  iconSize: [30, 48], // Approx 1.2x bigger than blue (25x41)
-  iconAnchor: [0, 48], // Shifted further right to reveal half of underlying blue marker
-  popupAnchor: [15, -40],
+  iconSize: [30, 48],
+  iconAnchor: [15, 48],
+  popupAnchor: [0, -40],
   shadowSize: [48, 48],
 });
 
@@ -26,27 +28,35 @@ const blueIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-// Helper component to recenter map
+// -----------------------------
+// Recenter Component
+// -----------------------------
 function RecenterMap({ coords }) {
   const map = useMap();
+
   useEffect(() => {
-    if (coords && coords.latitude && coords.longitude) {
-      map.flyTo([coords.latitude, coords.longitude], 18); // Zoom in closer on click
+    if (coords?.latitude && coords?.longitude) {
+      map.flyTo([coords.latitude, coords.longitude], 18);
     }
   }, [coords, map]);
+
   return null;
 }
 
+// -----------------------------
+// Recenter Button
+// -----------------------------
 function RecenterButton({ currentPosition }) {
   const map = useMap();
 
-  const handleRecenter = (e) => {
-    e.stopPropagation(); // Prevent map click propagation
+  const handleRecenter = () => {
     if (currentPosition) {
       map.flyTo(
         [currentPosition.latitude, currentPosition.longitude],
         map.getZoom()
       );
+    } else {
+      alert("Location unavailable — please enable Location Permission.");
     }
   };
 
@@ -73,14 +83,14 @@ function RecenterButton({ currentPosition }) {
           padding: 0,
           border: "none",
           backgroundColor: "white",
-          cursor: "pointer"
+          cursor: "pointer",
         }}
         title="Recenter to my location"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
+          width="22"
+          height="22"
           fill="currentColor"
           viewBox="0 0 16 16"
           style={{ color: "#333" }}
@@ -92,61 +102,65 @@ function RecenterButton({ currentPosition }) {
   );
 }
 
+// -----------------------------
+// MAIN MAP COMPONENT
+// -----------------------------
 function MapView({ alerts, focusCoords, focusedAlertId }) {
-  const fallbackPosition = { latitude: 14.386696, longitude: 120.895081 };
   const [currentPosition, setCurrentPosition] = useState(null);
-  const markerRefs = React.useRef({});
+  const [locationError, setLocationError] = useState(false);
 
+  const markerRefs = useRef({});
+
+  // -----------------------------------------------------
+  // GET LOCATION (NO FALLBACKS, NO HOME LOCATION)
+  // -----------------------------------------------------
   useEffect(() => {
     const getLocation = () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const coords = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            };
-            setCurrentPosition(coords);
-
-            // Save last known location silently
-            localStorage.setItem("lastLocation", JSON.stringify(coords));
-          },
-          (error) => {
-            console.warn("Could not get current position:", error.message);
-
-            const stored = localStorage.getItem("lastLocation");
-            if (stored) {
-              setCurrentPosition(JSON.parse(stored));
-            } else {
-              setCurrentPosition(fallbackPosition);
-            }
-          },
-          { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
-        );
-      } else {
-        const stored = localStorage.getItem("lastLocation");
-        if (stored) {
-          setCurrentPosition(JSON.parse(stored));
-        } else {
-          setCurrentPosition(fallbackPosition);
-        }
+      if (!navigator.geolocation) {
+        setLocationError("Geolocation not supported.");
+        return;
       }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCurrentPosition({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+          setLocationError(false);
+        },
+        (err) => {
+          console.warn("User denied location:", err.message);
+          setLocationError(true);
+          setCurrentPosition(null);
+          alert(
+            "Lifeline cannot access your location. Please enable Location Permission in your browser settings."
+          );
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
+      );
     };
 
     getLocation();
   }, []);
 
-  // Auto-open popup when focusedAlertId changes
+  // -----------------------------------------------------
+  // Auto-open popup when clicking alerts on the list
+  // -----------------------------------------------------
   useEffect(() => {
     if (focusedAlertId && markerRefs.current[focusedAlertId]) {
-      const marker = markerRefs.current[focusedAlertId];
-      marker.openPopup();
+      markerRefs.current[focusedAlertId].openPopup();
     }
   }, [focusedAlertId]);
 
-  const defaultCenter = currentPosition
+  // -----------------------------------------------------
+  // MAP START CENTER
+  // -----------------------------------------------------
+  const defaultCenter = focusCoords
+    ? [focusCoords.latitude, focusCoords.longitude]
+    : currentPosition
     ? [currentPosition.latitude, currentPosition.longitude]
-    : [14.5995, 120.9842]; // Manila fallback while loading
+    : [14.5995, 120.9842]; // Manila — safe neutral center
 
   return (
     <MapContainer
@@ -156,23 +170,22 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; OpenStreetMap contributors"
+        attribution="© OpenStreetMap contributors"
       />
 
-      {/* Recenter map when location changes initially OR when focusCoords changes */}
+      {/* Recenter on selected alert or my location */}
       {(focusCoords || currentPosition) && (
         <RecenterMap coords={focusCoords || currentPosition} />
       )}
 
-      {/* Manual Recenter Button */}
-      <RecenterButton currentPosition={currentPosition || fallbackPosition} />
+      <RecenterButton currentPosition={currentPosition} />
 
-      {/* Red pin for current or fallback location */}
+      {/* Current Location Marker (only if permission granted) */}
       {currentPosition && (
         <Marker
           position={[currentPosition.latitude, currentPosition.longitude]}
           icon={redIcon}
-          zIndexOffset={10000} // Ensure it stays on top
+          zIndexOffset={10000}
         >
           <Popup>
             📍 You are here <br />
@@ -182,9 +195,8 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
         </Marker>
       )}
 
-      {/* Show pins from alerts */}
+      {/* Alert markers */}
       {alerts.map((alert) => {
-        // FIX: read coords safely
         const lat =
           alert?.coords?.latitude ??
           alert?.coords?.lat ??
@@ -195,7 +207,6 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
           alert?.coords?.lng ??
           null;
 
-        // FIX: skip invalid markers (prevents crash)
         if (typeof lat !== "number" || typeof lng !== "number") {
           console.warn("Skipping invalid alert marker:", alert);
           return null;
@@ -211,8 +222,8 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
             <Popup>
               <strong>{alert.message}</strong> <br />
               From: {alert.user} <br />
-              Time: {alert.time ? alert.time.toLocaleString() : "No time"} <br />
-              Urgency Level: {alert.urgency_level || "Not available"}
+              Time: {alert.time || "No time"} <br />
+              Urgency Level: {alert.urgency_level || "N/A"}
             </Popup>
           </Marker>
         );
