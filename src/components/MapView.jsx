@@ -3,12 +3,11 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+// Time formatter
 const formatTime = (t) => {
   if (!t) return "No time";
-
   if (t.toDate) return t.toDate().toLocaleString();
   if (t instanceof Date) return t.toLocaleString();
-
   try {
     return new Date(t).toLocaleString();
   } catch {
@@ -16,11 +15,10 @@ const formatTime = (t) => {
   }
 };
 
+// Marker icons
 const redIcon = new L.Icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
   iconSize: [30, 48],
   iconAnchor: [0, 48],
   popupAnchor: [15, -40],
@@ -28,21 +26,24 @@ const redIcon = new L.Icon({
 });
 
 const blueIcon = new L.Icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
 
+// Safe recenter
 function RecenterMap({ coords }) {
   const map = useMap();
 
   useEffect(() => {
-    if (coords && coords.latitude && coords.longitude) {
+    if (
+      coords &&
+      typeof coords.latitude === "number" &&
+      typeof coords.longitude === "number"
+    ) {
       map.flyTo([coords.latitude, coords.longitude], 18);
     }
   }, [coords, map]);
@@ -50,16 +51,18 @@ function RecenterMap({ coords }) {
   return null;
 }
 
-function RecenterButton({ currentPosition }) {
+// Recenter button
+function RecenterButton({ coords }) {
   const map = useMap();
 
-  const handleRecenter = (e) => {
+  const handleClick = (e) => {
     e.stopPropagation();
-    if (currentPosition) {
-      map.flyTo(
-        [currentPosition.latitude, currentPosition.longitude],
-        map.getZoom()
-      );
+    if (
+      coords &&
+      typeof coords.latitude === "number" &&
+      typeof coords.longitude === "number"
+    ) {
+      map.flyTo([coords.latitude, coords.longitude], map.getZoom());
     }
   };
 
@@ -73,144 +76,121 @@ function RecenterButton({ currentPosition }) {
       }}
     >
       <button
-        onClick={handleRecenter}
+        className="btn btn-light"
+        onClick={handleClick}
         style={{
-          boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+          boxShadow: "0 2px 5px rgba(0, 0, 0, 0.3)",
           borderRadius: "50%",
           width: "40px",
           height: "40px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 0,
           border: "none",
-          backgroundColor: "white",
-          cursor: "pointer",
+          background: "#fff",
         }}
-        title="Recenter to my location"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          fill="currentColor"
-          viewBox="0 0 16 16"
-          style={{ color: "#333" }}
-        >
-          <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
-        </svg>
+        ⟳
       </button>
     </div>
   );
 }
 
 function MapView({ alerts, focusCoords, focusedAlertId }) {
-  const fallbackPosition = { latitude: 14.599512, longitude: 120.984222 }; // Manila
+  const fallback = { latitude: 14.599512, longitude: 120.984222 }; // Manila
   const [currentPosition, setCurrentPosition] = useState(null);
-  const [isFallback, setIsFallback] = useState(false); // NEW FLAG
   const markerRefs = React.useRef({});
 
+  // --- FIXED getLocation ---
   useEffect(() => {
-    const getLocation = () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const coords = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            };
-            setCurrentPosition(coords);
-            setIsFallback(false);
+    if (!navigator.geolocation) {
+      setCurrentPosition(fallback);
+      return;
+    }
 
-            localStorage.setItem("lastLocation", JSON.stringify(coords));
-          },
-          (error) => {
-            console.warn("GPS Error:", error.message);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        };
+        setCurrentPosition(coords);
+        localStorage.setItem("lastLocation", JSON.stringify(coords));
+      },
+      (err) => {
+        console.warn("GPS Error:", err.message);
 
-            const stored = localStorage.getItem("lastLocation");
-            if (stored) {
-              setCurrentPosition(JSON.parse(stored));
-              setIsFallback(true);
-            } else {
-              setCurrentPosition(fallbackPosition);
-              setIsFallback(true);
-            }
-          },
-          { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
-        );
-      } else {
+        // If user DENIED → DO NOT use invalid coordinates
+        if (err.code === 1) {
+          setCurrentPosition(fallback);
+          return;
+        }
+
+        // Try stored coords
         const stored = localStorage.getItem("lastLocation");
         if (stored) {
-          setCurrentPosition(JSON.parse(stored));
-          setIsFallback(true);
-        } else {
-          setCurrentPosition(fallbackPosition);
-          setIsFallback(true);
+          try {
+            const parsed = JSON.parse(stored);
+            if (parsed.latitude && parsed.longitude) {
+              setCurrentPosition(parsed);
+              return;
+            }
+          } catch {}
         }
-      }
-    };
 
-    getLocation();
+        // Final fallback
+        setCurrentPosition(fallback);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
+    );
   }, []);
 
+  // Auto-open popup
   useEffect(() => {
     if (focusedAlertId && markerRefs.current[focusedAlertId]) {
       markerRefs.current[focusedAlertId].openPopup();
     }
   }, [focusedAlertId]);
 
-  const defaultCenter = currentPosition
-    ? [currentPosition.latitude, currentPosition.longitude]
-    : [14.5995, 120.9842];
+  // Safe center
+  const center =
+    currentPosition &&
+    typeof currentPosition.latitude === "number" &&
+    typeof currentPosition.longitude === "number"
+      ? [currentPosition.latitude, currentPosition.longitude]
+      : [fallback.latitude, fallback.longitude];
 
   return (
-    <MapContainer
-      center={defaultCenter}
-      zoom={15}
-      style={{ height: "100%", width: "100%" }}
-    >
+    <MapContainer center={center} zoom={15} style={{ height: "100%", width: "100%" }}>
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution="&copy; OpenStreetMap contributors"
       />
 
-      {(focusCoords || currentPosition) && (
-        <RecenterMap coords={focusCoords || currentPosition} />
-      )}
+      <RecenterMap coords={focusCoords || currentPosition} />
+      <RecenterButton coords={currentPosition || fallback} />
 
-      <RecenterButton
-        currentPosition={currentPosition || fallbackPosition}
-      />
-      {currentPosition && (
-        <Marker
-          position={[
-            currentPosition.latitude,
-            currentPosition.longitude,
-          ]}
-          icon={redIcon}
-          zIndexOffset={10000}
-        >
-          <Popup>
-            {isFallback ? (
-              <>
-                ⚠️ <b>Fallback position</b> <br />
-                GPS failed to get your location. <br />
-                ({currentPosition.latitude}, {currentPosition.longitude})
-              </>
-            ) : (
-              <>
-                📍 You are here <br />
-                ({currentPosition.latitude}, {currentPosition.longitude})
-              </>
-            )}
-          </Popup>
-        </Marker>
-      )}
+      {/* RED MARKER — only if valid coords */}
+      {currentPosition &&
+        typeof currentPosition.latitude === "number" &&
+        typeof currentPosition.longitude === "number" && (
+          <Marker
+            position={[currentPosition.latitude, currentPosition.longitude]}
+            icon={redIcon}
+          >
+            <Popup>
+              {currentPosition.latitude === fallback.latitude &&
+              currentPosition.longitude === fallback.longitude
+                ? "⚠️ Fallback location used (GPS denied)"
+                : "📍 You are here"}
+              <br />
+              ({currentPosition.latitude.toFixed(4)},{" "}
+              {currentPosition.longitude.toFixed(4)})
+            </Popup>
+          </Marker>
+        )}
+
+      {/* Alert markers */}
       {alerts.map((alert) => {
-        const lat =
-          alert?.coords?.latitude ?? alert?.coords?.lat ?? null;
-        const lng =
-          alert?.coords?.longitude ?? alert?.coords?.lng ?? null;
+        const lat = alert?.coords?.latitude ?? null;
+        const lng = alert?.coords?.longitude ?? null;
 
         if (typeof lat !== "number" || typeof lng !== "number") return null;
 
@@ -225,8 +205,7 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
               <strong>{alert.message}</strong> <br />
               From: {alert.user} <br />
               Time: {formatTime(alert.time)} <br />
-              Category: {alert.category || "Not available"} <br />
-              Urgency Level: {alert.urgency_level || "Not available"}
+              Urgency: {alert.urgency_level || "N/A"}
             </Popup>
           </Marker>
         );
