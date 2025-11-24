@@ -195,14 +195,12 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
               <>
                 ⚠️ <b>Fallback position</b> <br />
                 GPS failed to get your location. <br />
-                ({currentPosition.latitude.toFixed(4)},{" "}
-                {currentPosition.longitude.toFixed(4)})
+                ({currentPosition.latitude}, {currentPosition.longitude})
               </>
             ) : (
               <>
                 📍 You are here <br />
-                ({currentPosition.latitude.toFixed(4)},{" "}
-                {currentPosition.longitude.toFixed(4)})
+                ({currentPosition.latitude}, {currentPosition.longitude})
               </>
             )}
           </Popup>
