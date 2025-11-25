@@ -84,12 +84,15 @@ function RecenterButton({ coords }) {
           width: "40px",
           height: "40px",
           border: "none",
-        color: "#000",
+          backgroundColor: "white",
+          cursor: "pointer",
+          color: "#333",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           padding: 0,
         }}
+        title="Recenter to my location"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -97,12 +100,9 @@ function RecenterButton({ coords }) {
           height="24"
           fill="currentColor"
           viewBox="0 0 16 16"
+          style={{ color: "#333" }}
         >
-          <path
-            fillRule="evenodd"
-            d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"
-          />
-          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
+          <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
         </svg>
       </button>
     </div>
@@ -148,7 +148,7 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
               setCurrentPosition(parsed);
               return;
             }
-          } catch {}
+          } catch { }
         }
 
         // Final fallback
@@ -168,8 +168,8 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
   // Safe center
   const center =
     currentPosition &&
-    typeof currentPosition.latitude === "number" &&
-    typeof currentPosition.longitude === "number"
+      typeof currentPosition.latitude === "number" &&
+      typeof currentPosition.longitude === "number"
       ? [currentPosition.latitude, currentPosition.longitude]
       : [fallback.latitude, fallback.longitude];
 
@@ -193,7 +193,7 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
           >
             <Popup>
               {currentPosition.latitude === fallback.latitude &&
-              currentPosition.longitude === fallback.longitude
+                currentPosition.longitude === fallback.longitude
                 ? "⚠️ Fallback location used (GPS denied)"
                 : "📍 You are here"}
               <br />
