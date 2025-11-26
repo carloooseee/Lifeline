@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -17,7 +17,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 const analytics = getAnalytics(app);
+
 const auth = getAuth(app);
+// Enable local persistence to allow offline login with saved credentials
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.warn("Firebase auth persistence setup failed:", error);
+});
+
 const db = getFirestore(app);
 const storage = getStorage(app);
 

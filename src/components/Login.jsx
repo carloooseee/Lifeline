@@ -126,7 +126,7 @@ export default function Login() {
         navigate("/home");
         return;
       } else {
-        setError("Guest mode requires one initial online setup.");
+      setError("Guest mode requires an initial internet connection to set up your guest session. Please connect to the internet for the first time.");
         return;
       }
     }
