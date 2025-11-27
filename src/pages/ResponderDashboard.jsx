@@ -79,17 +79,9 @@ export default function ResponderDashboard() {
   const handleComplete = async (alertId) => {
     if (!window.confirm("Mark this alert as resolved?")) return;
     try {
-      // Option A: Delete the doc (as per original logic)
-      // await deleteDoc(doc(db, "Alerts", alertId));
+      await deleteDoc(doc(db, "Alerts", alertId));
       
-      // Option B: Mark as completed (better for history)
-      await updateDoc(doc(db, "Alerts", alertId), {
-        alertCompleted: true,
-        completedAt: new Date().toISOString(),
-        completedBy: user.email
-      });
-      
-      alert("Alert marked as complete.");
+      alert("Alert deleted successfully.");
     } catch (err) {
       console.error("Error completing:", err);
       alert("Failed to complete alert.");
