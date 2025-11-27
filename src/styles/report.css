@@ -24,7 +24,7 @@
     Arial, sans-serif;
 }
 
-.map-container {
+.history-page .map-container {
   position: absolute;
   top: 0;
   left: 0;
@@ -35,7 +35,7 @@
 }
 
 /* --- Leaflet Map Specific --- */
-.map-container .leaflet-container {
+.history-page .map-container .leaflet-container {
   width: 100%;
   height: 100%;
   outline: none;
@@ -177,6 +177,7 @@
 .alertBox {
   flex-grow: 1;
   overflow-y: auto;
+  min-height: 0; /* Critical for flex child scrolling */
   border: 1px solid #eee;
   border-radius: 8px;
   background-color: #fdfdfd;
@@ -188,11 +189,22 @@
   list-style: none;
   padding: 0;
   margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .alertBox ol {
+    grid-template-columns: 1fr;
+  }
 }
 
 .alertBox li {
   padding: 1rem;
-  border-bottom: 1px solid #eee;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: #fff;
   transition: background-color 0.2s ease;
   /* Smooth transition for hover */
 }

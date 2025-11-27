@@ -1,0 +1,173 @@
+.responder-dashboard {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: "Inter", sans-serif;
+}
+
+/* Left Panel: Alerts List (30%) */
+.dashboard-sidebar {
+  width: 30%;
+  height: 100%;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #ddd;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+  z-index: 10;
+}
+
+.dashboard-header {
+  padding: 20px;
+  background: white;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.logout-btn {
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #d32f2f;
+}
+
+.alerts-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Alert Card Styling */
+.alert-card {
+  background: #fff;
+  border: none;
+  border-bottom: 1px solid #eee; /* minimal separator */
+  border-radius: 0;
+  padding: 16px;
+  transition: all 0.2s ease;
+  box-shadow: none;
+}
+
+.alert-card:hover {
+  background-color: #f9f9f9;
+}
+
+.alert-card h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  color: #d32f2f;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.alert-status-badge {
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #eee;
+  color: #666;
+}
+
+.alert-status-badge.responding {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.alert-details {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.alert-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Consistent Button Styling */
+.btn-respond, .btn-complete {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+  text-align: center;
+  width: 100%;
+}
+
+.btn-respond {
+  background: #ff9800;
+  color: white;
+}
+
+.btn-respond:hover {
+  background: #f57c00;
+}
+
+.btn-complete {
+  background: #4caf50;
+  color: white;
+}
+
+.btn-complete:hover {
+  background: #388e3c;
+}
+
+/* Right Panel: Map (70%) */
+.responder-dashboard .map-container {
+  width: 70%;
+  height: 100%;
+  position: relative;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .responder-dashboard {
+    flex-direction: column-reverse; /* Map on top, alerts below or vice versa depending on preference. Let's do map top usually, but here sidebar is first in DOM. */
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto; /* Allow full page scroll if needed */
+  }
+
+  .dashboard-sidebar {
+    width: 100%;
+    height: 50vh; /* Split screen */
+    order: 2; /* Put sidebar below map */
+  }
+
+  .responder-dashboard .map-container {
+    width: 100%;
+    height: 50vh;
+    order: 1; /* Put map on top */
+  }
+
+  .alert-card {
+    padding: 12px;
+  }
+}

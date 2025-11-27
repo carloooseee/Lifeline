@@ -330,6 +330,12 @@ function Home() {
                 {activeAlert.coords.longitude}
               </p>
             )}
+            
+            {activeAlert.status === "responding" && (
+              <div className="alert-status-responding">
+                🚑 <b>Responders are on the way!</b>
+              </div>
+            )}
 
             <button className="btn btn-complete" onClick={markAlertCompleted}>
               ✓ Mark as Completed
@@ -340,6 +346,16 @@ function Home() {
         <button className="btn btn-map" onClick={() => navigate("/reports")}>
           View Alert
         </button>
+
+        {user && user.email === "gentri@responder.com" && (
+          <button 
+            className="btn btn-responder" 
+            onClick={() => navigate("/responder")}
+            style={{ marginTop: "10px", backgroundColor: "#ff9800", color: "white" }}
+          >
+            Responder Dashboard
+          </button>
+        )}
 
         <a className="btn btn-logout" onClick={() => navigate("/")}>
           Log out
