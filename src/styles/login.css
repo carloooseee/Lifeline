@@ -155,68 +155,7 @@ input {
     opacity: 1;
 }
 
-.form-options {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    margin-top: 0.75rem;
-    margin-bottom: 1.25rem;
-}
 
-.switch-label {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
-    font-size: 1rem;
-    color: #333;
-    margin-left: 0.625rem;
-}
-
-.switch-label input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-    position: absolute;
-}
-
-.slider {
-    display: block;
-    position: relative;
-    width: 3.25rem;
-    height: 1.75rem;
-    background-color: #ccc;
-    border-radius: 1.75rem;
-    transition: background-color 0.2s;
-    margin-right: 0.625rem;
-}
-
-.slider::before {
-    content: "";
-    position: absolute;
-    left: 0.25rem;
-    bottom: 0.25rem;
-    width: 1.1875rem;
-    height: 1.1875rem;
-    background-color: white;
-    border-radius: 50%;
-    transition: transform 0.2s;
-}
-
-.switch-label input:checked + .slider {
-    background-color: #007bff;
-}
-
-.switch-label input:checked + .slider::before {
-    transform: translateX(1.5rem);
-}
-
-.forgot-password {
-    font-size: 1.125rem;
-    color: #007bff;
-    text-decoration: none;
-}
 
 .sign-in-btn {
     width: 100%;
@@ -362,7 +301,7 @@ input {
         font-size: 1.5rem;
         margin-bottom: 1.5625rem;
     }
-    .input-label, .forgot-password {
+    .input-label {
         font-size: 1rem;
     }
     input, .password-input-container input, .sign-in-btn, .guest-btn, .google-btn {
@@ -370,10 +309,6 @@ input {
     }
     .signup-link {
         font-size: 1.125rem;
-    }
-
-    .form-options {
-        margin-bottom: 1rem;
     }
     
     .signup-link {
@@ -398,9 +333,3 @@ input {
         background-position: center;
     }
 }
-
-
-
-
-
-

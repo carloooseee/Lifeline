@@ -18,7 +18,6 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [isLogin, setIsLogin] = useState(true);
@@ -211,23 +210,6 @@ export default function Login() {
                 required
               />
             </>
-          )}
-
-          {isLogin && (
-            <div className="form-options">
-              <label className="switch-label">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <span className="slider"></span>
-                Remember me
-              </label>
-              <a href="#" className="forgot-password">
-                Forgot password?
-              </a>
-            </div>
           )}
 
           <button type="submit" className="sign-in-btn">
