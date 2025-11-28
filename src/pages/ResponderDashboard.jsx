@@ -51,10 +51,10 @@ export default function ResponderDashboard() {
         // Ensure time is a Date object if it's a timestamp
         time: doc.data().time ? new Date(doc.data().time) : null,
       }));
-      
+
       // Sort by time (newest first)
       data.sort((a, b) => (b.time || 0) - (a.time || 0));
-      
+
       setAlerts(data);
     });
 
@@ -76,11 +76,23 @@ export default function ResponderDashboard() {
     }
   };
 
+  const handleArrived = async (alertId) => {
+    try {
+      await updateDoc(doc(db, "Alerts", alertId), {
+        status: "arrived",
+      });
+      alert("Marked as arrived!");
+    } catch (err) {
+      console.error("Error marking arrived:", err);
+      alert("Failed to update status.");
+    }
+  };
+
   const handleComplete = async (alertId) => {
     if (!window.confirm("Mark this alert as resolved?")) return;
     try {
       await deleteDoc(doc(db, "Alerts", alertId));
-      
+
       alert("Alert deleted successfully.");
     } catch (err) {
       console.error("Error completing:", err);
@@ -111,8 +123,8 @@ export default function ResponderDashboard() {
             <div className="no-alerts">No active alerts. Good job!</div>
           ) : (
             alerts.map((alert) => (
-              <div 
-                key={alert.id} 
+              <div
+                key={alert.id}
                 className="alert-card"
                 onClick={() => {
                   if (alert.coords && alert.coords.latitude) {
@@ -134,8 +146,8 @@ export default function ResponderDashboard() {
                   <p><strong>Time:</strong> {alert.time ? alert.time.toLocaleString() : "N/A"}</p>
                 </div>
                 <div className="alert-actions">
-                  {alert.status !== "responding" && (
-                    <button 
+                  {alert.status !== "responding" && alert.status !== "arrived" && (
+                    <button
                       className="btn-respond"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -145,7 +157,18 @@ export default function ResponderDashboard() {
                       Respond
                     </button>
                   )}
-                  <button 
+                  {alert.status === "responding" && (
+                    <button
+                      className="btn-arrived"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleArrived(alert.id);
+                      }}
+                    >
+                      Arrived
+                    </button>
+                  )}
+                  <button
                     className="btn-complete"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -159,12 +182,12 @@ export default function ResponderDashboard() {
             ))
           )}
         </div>
-      </div>
+      </div >
 
       {/* Right Panel: Map */}
-      <div className="map-container">
+      < div className="map-container" >
         <MapView alerts={alerts} focusCoords={focusCoords} />
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

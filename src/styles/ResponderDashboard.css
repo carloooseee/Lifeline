@@ -110,6 +110,7 @@
 
 /* Consistent Button Styling */
 .responder-dashboard .btn-respond,
+.responder-dashboard .btn-arrived,
 .responder-dashboard .btn-complete {
   flex: 1;
   padding: 10px;
@@ -138,6 +139,15 @@
 
 .responder-dashboard .btn-respond:hover {
   background: #f57c00;
+}
+
+.responder-dashboard .btn-arrived {
+  background: #2196f3;
+  color: white;
+}
+
+.responder-dashboard .btn-arrived:hover {
+  background: #1976d2;
 }
 
 .responder-dashboard .btn-complete {

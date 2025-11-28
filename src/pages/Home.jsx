@@ -197,7 +197,7 @@ function Home() {
       const ml = await prioritizeAlert(finalMessage);
       category = ml.category;
       urgency_level = ml.urgency_level;
-    } catch {}
+    } catch { }
 
     const alertData = {
       userId: auth.currentUser?.uid || null,
@@ -271,11 +271,10 @@ function Home() {
           <p>
             <span className="status-text">Status:</span>
             <span
-              className={`status-indicator ${
-                internetStatus === "Online"
-                  ? "status-online"
-                  : "status-offline"
-              }`}
+              className={`status-indicator ${internetStatus === "Online"
+                ? "status-online"
+                : "status-offline"
+                }`}
             >
               {internetStatus}
             </span>
@@ -330,10 +329,16 @@ function Home() {
                 {activeAlert.coords.longitude}
               </p>
             )}
-            
+
             {activeAlert.status === "responding" && (
               <div className="alert-status-responding">
-                 <b>Responders are on the way!</b>
+                <b>Responders are on the way!</b>
+              </div>
+            )}
+
+            {activeAlert.status === "arrived" && (
+              <div className="alert-status-responding" style={{ borderColor: "#004cffff", color: "#4c49ffff", backgroundColor: "#ded9fdff" }}>
+                <b>Responders have arrived!</b>
               </div>
             )}
 
@@ -348,8 +353,8 @@ function Home() {
         </button>
 
         {user && user.email === "gentri@responder.com" && (
-          <button 
-            className="btn btn-responder" 
+          <button
+            className="btn btn-responder"
             onClick={() => navigate("/responder")}
             style={{ marginTop: "10px", backgroundColor: "#ff9800", color: "white" }}
           >
