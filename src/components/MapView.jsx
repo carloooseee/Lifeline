@@ -221,7 +221,8 @@ function MapView({ alerts, focusCoords, focusedAlertId }) {
               <strong>{alert.message}</strong> <br />
               From: {alert.user} <br />
               Time: {formatTime(alert.time)} <br />
-              Urgency: {alert.urgency_level || "N/A"}
+              Urgency: {alert.urgency_level || "N/A"} <br />
+              Category: {alert.category || "N/A"}
             </Popup>
           </Marker>
         );

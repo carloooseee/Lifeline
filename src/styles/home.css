@@ -452,3 +452,28 @@ body {
     border-radius: 0 !important;
   }
 }
+
+/* Alert Status Notification */
+.alert-status-responding {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #ffe9e9;
+  border: 1px solid #cb0000;
+  border-radius: 8px;
+  color: #ff0000;
+  font-size: 1.1rem;
+  text-align: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 1);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+  }
+}

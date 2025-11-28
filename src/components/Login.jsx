@@ -66,8 +66,13 @@ export default function Login() {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
-      await signInWithPopup(auth, provider);
-      navigate("/home");
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      if (user.email && user.email.endsWith("@responder.com")) {
+        navigate("/responder-dashboard");
+      } else {
+        navigate("/home");
+      }
     } catch (err) {
       if (err?.code !== "auth/popup-closed-by-user") {
         setError(err.message);
@@ -82,7 +87,11 @@ export default function Login() {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/home");
+      if (email.endsWith("@responder.com")) {
+        navigate("/responder-dashboard");
+      } else {
+        navigate("/home");
+      }
     } catch (err) {
       setError(err.message);
     }
