@@ -235,6 +235,40 @@ function Home() {
     setIsSending(false);
   };
 
+  const getResponderStatusMessage = (category, status) => {
+    let responderType = "Responders";
+
+    switch (category) {
+      case "Crime/Violence":
+        responderType = "Police/Ambulance";
+        break;
+      case "Medical Emergency":
+      case "Injury":
+        responderType = "Ambulance";
+        break;
+      case "Fire":
+        responderType = "Fire Fighters/Ambulance";
+        break;
+      case "Rescue/Trapped":
+        responderType = "Rescue Team";
+        break;
+      case "Flood":
+        responderType = "Rescue Team";
+        break;
+      case "Earthquake":
+        responderType = "Rescue Team";
+        break;
+      default:
+        responderType = "Responders";
+    }
+
+    if (status === "arrived") {
+      return `${responderType} have arrived!`;
+    } else {
+      return `${responderType} are on the way!`;
+    }
+  };
+
   return (
     <div className="home-page-wrapper">
       <div className="logo home-logo">
@@ -332,13 +366,13 @@ function Home() {
 
             {activeAlert.status === "responding" && (
               <div className="alert-status-responding">
-                <b>Responders are on the way!</b>
+                <b>{getResponderStatusMessage(activeAlert.category, "responding")}</b>
               </div>
             )}
 
             {activeAlert.status === "arrived" && (
               <div className="alert-status-responding" style={{ borderColor: "#004cffff", color: "#4c49ffff", backgroundColor: "#ded9fdff" }}>
-                <b>Responders have arrived!</b>
+                <b>{getResponderStatusMessage(activeAlert.category, "arrived")}</b>
               </div>
             )}
 
