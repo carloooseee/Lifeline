@@ -333,12 +333,12 @@ function Home() {
             
             {activeAlert.status === "responding" && (
               <div className="alert-status-responding">
-                🚑 <b>Responders are on the way!</b>
+                 <b>Responders are on the way!</b>
               </div>
             )}
 
             <button className="btn btn-complete" onClick={markAlertCompleted}>
-              ✓ Mark as Completed
+              Mark as Completed
             </button>
           </div>
         )}

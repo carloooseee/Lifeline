@@ -457,10 +457,10 @@ body {
 .alert-status-responding {
   margin-top: 10px;
   padding: 10px;
-  background-color: #fff3e0;
-  border: 1px solid #ffe0b2;
+  background-color: #ffe9e9;
+  border: 1px solid #cb0000;
   border-radius: 8px;
-  color: #e65100;
+  color: #ff0000;
   font-size: 1.1rem;
   text-align: center;
   animation: pulse 2s infinite;
@@ -468,12 +468,12 @@ body {
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4);
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 1);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(255, 152, 0, 0);
+    box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
   }
 }
