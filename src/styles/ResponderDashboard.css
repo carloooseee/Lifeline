@@ -14,7 +14,7 @@
   display: flex;
   flex-direction: column;
   border-right: 1px solid #ddd;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
   z-index: 10;
 }
 
@@ -62,7 +62,8 @@
 .alert-card {
   background: #fff;
   border: none;
-  border-bottom: 1px solid #eee; /* minimal separator */
+  border-bottom: 1px solid #eee;
+  /* minimal separator */
   border-radius: 0;
   padding: 16px;
   transition: all 0.2s ease;
@@ -108,7 +109,8 @@
 }
 
 /* Consistent Button Styling */
-.btn-respond, .btn-complete {
+.responder-dashboard .btn-respond,
+.responder-dashboard .btn-complete {
   flex: 1;
   padding: 10px;
   border: none;
@@ -119,23 +121,31 @@
   transition: background 0.2s;
   text-align: center;
   width: 100%;
+  box-sizing: border-box;
+  /* Ensure padding doesn't affect width */
+  line-height: 1.5;
+  /* Explicit line-height */
+  height: auto;
+  /* Let padding define height */
+  margin: 0;
+  /* Reset margins */
 }
 
-.btn-respond {
+.responder-dashboard .btn-respond {
   background: #ff9800;
   color: white;
 }
 
-.btn-respond:hover {
+.responder-dashboard .btn-respond:hover {
   background: #f57c00;
 }
 
-.btn-complete {
+.responder-dashboard .btn-complete {
   background: #4caf50;
   color: white;
 }
 
-.btn-complete:hover {
+.responder-dashboard .btn-complete:hover {
   background: #388e3c;
 }
 
@@ -149,22 +159,27 @@
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .responder-dashboard {
-    flex-direction: column-reverse; /* Map on top, alerts below or vice versa depending on preference. Let's do map top usually, but here sidebar is first in DOM. */
+    flex-direction: column-reverse;
+    /* Map on top, alerts below or vice versa depending on preference. Let's do map top usually, but here sidebar is first in DOM. */
     flex-direction: column;
     height: 100vh;
-    overflow-y: auto; /* Allow full page scroll if needed */
+    overflow-y: auto;
+    /* Allow full page scroll if needed */
   }
 
   .dashboard-sidebar {
     width: 100%;
-    height: 50vh; /* Split screen */
-    order: 2; /* Put sidebar below map */
+    height: 50vh;
+    /* Split screen */
+    order: 2;
+    /* Put sidebar below map */
   }
 
   .responder-dashboard .map-container {
     width: 100%;
     height: 50vh;
-    order: 1; /* Put map on top */
+    order: 1;
+    /* Put map on top */
   }
 
   .alert-card {
