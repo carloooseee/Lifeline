@@ -101,7 +101,7 @@ function Home() {
   };
 
   useEffect(() => {
-    if (!auth.currentUser || auth.currentUser.isAnonymous) {
+    if (!auth.currentUser) {
       setActiveAlert(null);
       return;
     }
@@ -353,7 +353,7 @@ function Home() {
           )}
         </div>
 
-        {!auth.currentUser?.isAnonymous && activeAlert && (
+        {activeAlert && (
           <div className="active-alert">
             <h3>Active Alert</h3>
             <p><b>Message:</b> {activeAlert.message}</p>
@@ -371,7 +371,7 @@ function Home() {
             )}
 
             {activeAlert.status === "arrived" && (
-              <div className="alert-status-responding" style={{ borderColor: "#004cffff", color: "#4c49ffff", backgroundColor: "#ded9fdff" }}>
+              <div className="alert-status-arrived">
                 <b>{getResponderStatusMessage(activeAlert.category, "arrived")}</b>
               </div>
             )}
