@@ -134,7 +134,7 @@ export default function ResponderDashboard() {
                 style={{ cursor: "pointer" }}
               >
                 <h3>
-                  {alert.message || "No Message"}
+                  <b>{alert.message || "No Message"}</b>
                   {alert.status === "responding" && (
                     <span className="alert-status-badge responding">Responding</span>
                   )}

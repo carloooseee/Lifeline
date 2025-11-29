@@ -34,7 +34,7 @@
 }
 
 .logout-btn {
-  background: #ff4d4d;
+  background: #cb0000;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -46,7 +46,7 @@
 }
 
 .logout-btn:hover {
-  background: #d32f2f;
+  background: rgb(139, 31, 31);
 }
 
 .alerts-list {
@@ -142,21 +142,21 @@
 }
 
 .responder-dashboard .btn-arrived {
-  background: #2196f3;
+  background: #00379d;
   color: white;
 }
 
 .responder-dashboard .btn-arrived:hover {
-  background: #1976d2;
+  background: #002878;
 }
 
 .responder-dashboard .btn-complete {
-  background: #4caf50;
+  background: #28a745;
   color: white;
 }
 
 .responder-dashboard .btn-complete:hover {
-  background: #388e3c;
+  background: #166328;
 }
 
 /* Right Panel: Map (70%) */
