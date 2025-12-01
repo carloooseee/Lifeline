@@ -348,8 +348,33 @@ function Home() {
             </p>
           )}
 
-          {!isFetchingLocation && coords?.error && (
-            <p>Location Error: {coords.error}</p>
+          {!isFetchingLocation && (!coords || coords.error) && (
+            <div className="location-warning" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", color: "#4e4e4eff" }}>
+              <p style={{ margin: 0 }}>
+                Location not detected.
+              </p>
+              <button
+                className="btn btn-retry"
+                onClick={fetchCurrentLocationForUI}
+                title="Retry Location"
+                style={{
+                  backgroundColor: "#b5b5b5ff",
+                  color: "white",
+                  borderRadius: "50%",
+                  width: "30px",
+                  height: "30px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  fontSize: "18px"
+                }}
+              >
+                ↻
+              </button>
+            </div>
           )}
         </div>
 
