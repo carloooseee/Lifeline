@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
   getFirestore,
@@ -15,6 +15,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { app } from "../firebase";
 import { prioritizeAlert } from "../utils/ml.js";
+import NotificationPopup from "../components/Notification";
 import "../styles/home.css";
 
 const db = getFirestore(app);
@@ -28,12 +29,41 @@ function Home() {
   const [message, setMessage] = useState("");
   const [isFetchingLocation, setIsFetchingLocation] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [notification, setNotification] = useState(null);
+  const prevStatusRef = useRef(null);
 
   const [activeAlert, setActiveAlert] = useState(null);
   const navigate = useNavigate();
   const auth = getAuth(app);
 
   const isReallyOnline = () => navigator.onLine;
+
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  const sendSystemNotification = (title, body) => {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(title, { body, icon: "/pwa-192x192.png" });
+    }
+  };
+
+  const showNotification = (message, type = "info") => {
+    // 1. Custom Toast
+    setNotification({ message, type });
+    
+    // 2. System Push Notification
+    sendSystemNotification("Lifeline Alert", message);
+    
+    // 3. Native Alert (delayed slightly to allow UI updates)
+    setTimeout(() => alert(message), 100);
+  };
+
+  const closeNotification = () => {
+    setNotification(null);
+  };
 
   const saveDataToStorage = (locationData) => {
     const dataToSave = {
@@ -94,7 +124,7 @@ function Home() {
       await addDoc(collection(db, "Alerts"), alertData);
 
       localStorage.removeItem("pendingAlert");
-      alert("Queued alert was sent successfully!");
+      showNotification("Queued alert was sent successfully!", "success");
     } catch (err) {
       console.error("Failed sending queued alert:", err);
     }
@@ -116,9 +146,23 @@ function Home() {
 
     const unsub = onSnapshot(q, (snap) => {
       if (!snap.empty) {
-        setActiveAlert({ id: snap.docs[0].id, ...snap.docs[0].data() });
+        const data = snap.docs[0].data();
+        const newStatus = data.status;
+        
+        // Check for status changes to trigger notification
+        if (prevStatusRef.current && prevStatusRef.current !== newStatus) {
+           let msg = "";
+           if (newStatus === "responding") msg = "Responders are on the way!";
+           if (newStatus === "arrived") msg = "Responders have arrived!";
+           
+           if (msg) showNotification(msg, newStatus === "arrived" ? "success" : "info");
+        }
+        
+        prevStatusRef.current = newStatus;
+        setActiveAlert({ id: snap.docs[0].id, ...data });
       } else {
         setActiveAlert(null);
+        prevStatusRef.current = null;
       }
     });
 
@@ -129,16 +173,16 @@ function Home() {
     try {
       const current = auth.currentUser;
 
-      if (!current) return alert("Not signed in.");
+      if (!current) return showNotification("Not signed in.", "error");
       if (!activeAlert) return;
       if (activeAlert.userId !== current.uid)
-        return alert("You are not allowed to complete this alert.");
+        return showNotification("You are not allowed to complete this alert.", "error");
 
       await deleteDoc(doc(db, "Alerts", activeAlert.id));
-      alert("Task completed.");
+      showNotification("Task completed.", "success");
     } catch (err) {
       console.error("Complete task error:", err);
-      alert("Error completing task.");
+      showNotification("Error completing task.", "error");
     }
   };
 
@@ -175,7 +219,7 @@ function Home() {
 
     history = history.filter((t) => now - t < oneHour);
     if (history.length >= 5)
-      return alert("Slow down: max 5 alerts per hour.");
+      return showNotification("Slow down: max 5 alerts per hour.", "warning");
 
     history.push(now);
     localStorage.setItem("alertHistory", JSON.stringify(history));
@@ -184,7 +228,7 @@ function Home() {
     const lastSend = Number(localStorage.getItem("lastSendTimestamp"));
     if (lastSend && now - lastSend < 10000) {
       const secs = Math.ceil((10000 - (now - lastSend)) / 1000);
-      return alert(`Wait ${secs}s before sending again.`);
+      return showNotification(`Wait ${secs}s before sending again.`, "warning");
     }
     localStorage.setItem("lastSendTimestamp", now.toString());
 
@@ -218,18 +262,18 @@ function Home() {
 
     if (!isReallyOnline()) {
       localStorage.setItem("pendingAlert", JSON.stringify(alertData));
-      alert("Offline → Alert saved locally. Will send when online.");
+      showNotification("Offline → Alert saved locally. Will send when online.", "warning");
       setIsSending(false);
       return;
     }
 
     try {
       await addDoc(collection(db, "Alerts"), alertData);
-      alert("Help request sent!");
+      showNotification("Help request sent!", "success");
       setMessage("");
     } catch (err) {
       localStorage.setItem("pendingAlert", JSON.stringify(alertData));
-      alert("Network issue → Alert queued locally.");
+      showNotification("Network issue → Alert queued locally.", "warning");
     }
 
     setIsSending(false);
@@ -271,6 +315,13 @@ function Home() {
 
   return (
     <div className="home-page-wrapper">
+      {notification && (
+        <NotificationPopup
+          message={notification.message}
+          type={notification.type}
+          onClose={closeNotification}
+        />
+      )}
       <div className="logo home-logo">
         <h1>
           <span className="life">Life</span>
