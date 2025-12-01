@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
   getFirestore,
@@ -15,7 +15,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import { app } from "../firebase";
 import { prioritizeAlert } from "../utils/ml.js";
-import NotificationPopup from "../components/Notification";
 import "../styles/home.css";
 
 const db = getFirestore(app);
@@ -29,41 +28,12 @@ function Home() {
   const [message, setMessage] = useState("");
   const [isFetchingLocation, setIsFetchingLocation] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [notification, setNotification] = useState(null);
-  const prevStatusRef = useRef(null);
 
   const [activeAlert, setActiveAlert] = useState(null);
   const navigate = useNavigate();
   const auth = getAuth(app);
 
   const isReallyOnline = () => navigator.onLine;
-
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission !== "granted") {
-      Notification.requestPermission();
-    }
-  }, []);
-
-  const sendSystemNotification = (title, body) => {
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(title, { body, icon: "/pwa-192x192.png" });
-    }
-  };
-
-  const showNotification = (message, type = "info") => {
-    // 1. Custom Toast
-    setNotification({ message, type });
-    
-    // 2. System Push Notification
-    sendSystemNotification("Lifeline Alert", message);
-    
-    // 3. Native Alert (delayed slightly to allow UI updates)
-    setTimeout(() => alert(message), 100);
-  };
-
-  const closeNotification = () => {
-    setNotification(null);
-  };
 
   const saveDataToStorage = (locationData) => {
     const dataToSave = {
@@ -124,7 +94,7 @@ function Home() {
       await addDoc(collection(db, "Alerts"), alertData);
 
       localStorage.removeItem("pendingAlert");
-      showNotification("Queued alert was sent successfully!", "success");
+      alert("Queued alert was sent successfully!");
     } catch (err) {
       console.error("Failed sending queued alert:", err);
     }
@@ -146,23 +116,9 @@ function Home() {
 
     const unsub = onSnapshot(q, (snap) => {
       if (!snap.empty) {
-        const data = snap.docs[0].data();
-        const newStatus = data.status;
-        
-        // Check for status changes to trigger notification
-        if (prevStatusRef.current && prevStatusRef.current !== newStatus) {
-           let msg = "";
-           if (newStatus === "responding") msg = "Responders are on the way!";
-           if (newStatus === "arrived") msg = "Responders have arrived!";
-           
-           if (msg) showNotification(msg, newStatus === "arrived" ? "success" : "info");
-        }
-        
-        prevStatusRef.current = newStatus;
-        setActiveAlert({ id: snap.docs[0].id, ...data });
+        setActiveAlert({ id: snap.docs[0].id, ...snap.docs[0].data() });
       } else {
         setActiveAlert(null);
-        prevStatusRef.current = null;
       }
     });
 
@@ -173,16 +129,16 @@ function Home() {
     try {
       const current = auth.currentUser;
 
-      if (!current) return showNotification("Not signed in.", "error");
+      if (!current) return alert("Not signed in.");
       if (!activeAlert) return;
       if (activeAlert.userId !== current.uid)
-        return showNotification("You are not allowed to complete this alert.", "error");
+        return alert("You are not allowed to complete this alert.");
 
       await deleteDoc(doc(db, "Alerts", activeAlert.id));
-      showNotification("Task completed.", "success");
+      alert("Task completed.");
     } catch (err) {
       console.error("Complete task error:", err);
-      showNotification("Error completing task.", "error");
+      alert("Error completing task.");
     }
   };
 
@@ -219,7 +175,7 @@ function Home() {
 
     history = history.filter((t) => now - t < oneHour);
     if (history.length >= 5)
-      return showNotification("Slow down: max 5 alerts per hour.", "warning");
+      return alert("Slow down: max 5 alerts per hour.");
 
     history.push(now);
     localStorage.setItem("alertHistory", JSON.stringify(history));
@@ -228,7 +184,7 @@ function Home() {
     const lastSend = Number(localStorage.getItem("lastSendTimestamp"));
     if (lastSend && now - lastSend < 10000) {
       const secs = Math.ceil((10000 - (now - lastSend)) / 1000);
-      return showNotification(`Wait ${secs}s before sending again.`, "warning");
+      return alert(`Wait ${secs}s before sending again.`);
     }
     localStorage.setItem("lastSendTimestamp", now.toString());
 
@@ -262,18 +218,18 @@ function Home() {
 
     if (!isReallyOnline()) {
       localStorage.setItem("pendingAlert", JSON.stringify(alertData));
-      showNotification("Offline → Alert saved locally. Will send when online.", "warning");
+      alert("Offline → Alert saved locally. Will send when online.");
       setIsSending(false);
       return;
     }
 
     try {
       await addDoc(collection(db, "Alerts"), alertData);
-      showNotification("Help request sent!", "success");
+      alert("Help request sent!");
       setMessage("");
     } catch (err) {
       localStorage.setItem("pendingAlert", JSON.stringify(alertData));
-      showNotification("Network issue → Alert queued locally.", "warning");
+      alert("Network issue → Alert queued locally.");
     }
 
     setIsSending(false);
@@ -315,13 +271,6 @@ function Home() {
 
   return (
     <div className="home-page-wrapper">
-      {notification && (
-        <NotificationPopup
-          message={notification.message}
-          type={notification.type}
-          onClose={closeNotification}
-        />
-      )}
       <div className="logo home-logo">
         <h1>
           <span className="life">Life</span>
@@ -399,33 +348,8 @@ function Home() {
             </p>
           )}
 
-          {!isFetchingLocation && (!coords || coords.error) && (
-            <div className="location-warning" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", color: "#4e4e4eff" }}>
-              <p style={{ margin: 0 }}>
-                Location not detected.
-              </p>
-              <button
-                className="btn btn-retry"
-                onClick={fetchCurrentLocationForUI}
-                title="Retry Location"
-                style={{
-                  backgroundColor: "#b5b5b5ff",
-                  color: "white",
-                  borderRadius: "50%",
-                  width: "30px",
-                  height: "30px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
-                  fontSize: "18px"
-                }}
-              >
-                ↻
-              </button>
-            </div>
+          {!isFetchingLocation && coords?.error && (
+            <p>Location Error: {coords.error}</p>
           )}
         </div>
 
