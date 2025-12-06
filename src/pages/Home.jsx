@@ -148,7 +148,7 @@ function Home() {
       if (currUser) processPendingAlert(currUser);
     });
 
-    fetchCurrentLocationForUI();
+    // fetchCurrentLocationForUI();
 
     const handleOnline = () => {
       setInternetStatus("Online");
@@ -396,9 +396,9 @@ function Home() {
           </button>
         )}
 
-        <a className="btn btn-logout" onClick={() => navigate("/")}>
+        <button className="btn btn-logout" onClick={() => navigate("/")}>
           Log out
-        </a>
+        </button>
       </div>
     </div>
   );

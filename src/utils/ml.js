@@ -1,16 +1,16 @@
 // src/utils/ml.js
 // Clean ONNX + NB pipeline for browser (no jsep, no threaded loaders)
 
-import * as ort from "onnxruntime-web";
+// import * as ort from "onnxruntime-web";
 
 
 const BASE_PATH = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 
-ort.env.wasm.wasmPaths = `${BASE_PATH}/onnx/`;
-ort.env.wasm.simd = true;
-ort.env.wasm.numThreads = 1;
-ort.env.wasm.proxy = false;
+// ort.env.wasm.wasmPaths = `${BASE_PATH}/onnx/`;
+// ort.env.wasm.simd = true;
+// ort.env.wasm.numThreads = 1;
+// ort.env.wasm.proxy = false;
 
 const CATEGORY_MODEL_URL      = `${BASE_PATH}/models/category_model.onnx`;
 const VECTORIZER_URL          = `${BASE_PATH}/models/vectorizer.json`;
@@ -20,6 +20,7 @@ const URGENCY_LABELS_URL      = `${BASE_PATH}/models/urgency_labels.json`;
 
 
 // -----------------------------------------
+let ort = null;
 let ortSession = null;
 let vocab = null;
 let vocabSize = null;
@@ -95,6 +96,14 @@ async function loadVectorizer() {
 
 async function loadCategoryModel() {
   if (ortSession) return ortSession;
+
+  if (!ort) {
+    ort = await import("onnxruntime-web");
+    ort.env.wasm.wasmPaths = `${BASE_PATH}/onnx/`;
+    ort.env.wasm.simd = true;
+    ort.env.wasm.numThreads = 1;
+    ort.env.wasm.proxy = false;
+  }
 
   const opts = {
     executionProviders: ["wasm"],
@@ -239,4 +248,4 @@ export async function prewarmModels() {
   }
 }
 
-prewarmModels();
+// prewarmModels();

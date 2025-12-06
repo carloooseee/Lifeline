@@ -7,13 +7,15 @@ import ResponderDashboard from "./pages/ResponderDashboard.jsx";
 function App() {
   return (
     <HashRouter>
-      <Routes>
-        <Route path="/" element={<Entry />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/responder-dashboard" element={<ResponderDashboard />} />
-        <Route path="/responder" element={<ResponderDashboard />} />
-      </Routes>
+      <main>
+        <Routes>
+          <Route path="/" element={<Entry />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/responder-dashboard" element={<ResponderDashboard />} />
+          <Route path="/responder" element={<ResponderDashboard />} />
+        </Routes>
+      </main>
     </HashRouter>
   );
 }
