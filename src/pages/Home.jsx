@@ -148,7 +148,7 @@ function Home() {
       if (currUser) processPendingAlert(currUser);
     });
 
-    // fetchCurrentLocationForUI();
+    fetchCurrentLocationForUI();
 
     const handleOnline = () => {
       setInternetStatus("Online");
