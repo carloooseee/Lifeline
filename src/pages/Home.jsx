@@ -201,12 +201,12 @@ function Home() {
     const cleanMsg = finalMessage.trim().toUpperCase();
     if (cleanMsg === "HELP" || cleanMsg === "HELP." || cleanMsg === "HELP!") {
       category = "General Emergency";
-      urgency_level = "High";
+      urgency_level = "Medium Priority";
     } else {
       try {
         const ml = await prioritizeAlert(finalMessage);
         category = ml.category || "Unknown";
-        urgency_level = ml.urgency_level || "Unknown";
+        urgency_level = ml.urgency_level || "Medium Priority";
       } catch (err) {
         console.error("ML Inference failed:", err);
         // Fallback is already 'Unknown'
