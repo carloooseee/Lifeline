@@ -214,6 +214,22 @@ function Home() {
     }
 
     // 3. Attach labels to alert object
+    let finalCoords = coords;
+    if (!finalCoords || finalCoords.error) {
+      try {
+        const saved = localStorage.getItem("lastLocation");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.coords && !parsed.coords.error) {
+            finalCoords = parsed.coords;
+            console.log("Using cached location:", finalCoords);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to recover saved location:", e);
+      }
+    }
+
     const alertData = {
       userId: auth.currentUser?.uid || null,
       user: user
@@ -221,7 +237,7 @@ function Home() {
           ? `Guest (${user.uid})`
           : user.email
         : "Unknown User",
-      coords: coords,
+      coords: finalCoords,
       message: finalMessage,
       time: new Date().toISOString(),
       category,
@@ -353,7 +369,7 @@ function Home() {
           onClick={() => fetchCurrentLocationForUI()}
           disabled={isFetchingLocation}
         >
-          {isFetchingLocation ? "Getting Location..." : "Store Information"}
+          {isFetchingLocation ? "Getting Location..." : "Update Information"}
         </button>
 
         <div className="location-display">
