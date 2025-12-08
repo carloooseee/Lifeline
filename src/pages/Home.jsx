@@ -188,17 +188,32 @@ function Home() {
     }
     localStorage.setItem("lastSendTimestamp", now.toString());
 
-    let category = "Not Available";
-    let urgency_level = "Not Available";
-
+    // 1. Capture Input
     const finalMessage = message.trim() || "HELP";
+    setIsSending(true);
 
-    try {
-      const ml = await prioritizeAlert(finalMessage);
-      category = ml.category;
-      urgency_level = ml.urgency_level;
-    } catch { }
+    // 2. Await ML Inference (Urgency & Category)
+    // We do this BEFORE checking network so that even offline saves have tags.
+    let category = "Unknown";
+    let urgency_level = "Unknown"; // Default to Unknown if ML fails entirely
 
+    // Special case: If message is just "HELP" (or similar), default to General/High
+    const cleanMsg = finalMessage.trim().toUpperCase();
+    if (cleanMsg === "HELP" || cleanMsg === "HELP." || cleanMsg === "HELP!") {
+      category = "General Emergency";
+      urgency_level = "High";
+    } else {
+      try {
+        const ml = await prioritizeAlert(finalMessage);
+        category = ml.category || "Unknown";
+        urgency_level = ml.urgency_level || "Unknown";
+      } catch (err) {
+        console.error("ML Inference failed:", err);
+        // Fallback is already 'Unknown'
+      }
+    }
+
+    // 3. Attach labels to alert object
     const alertData = {
       userId: auth.currentUser?.uid || null,
       user: user
@@ -214,20 +229,23 @@ function Home() {
       alertCompleted: false,
     };
 
-    setIsSending(true);
-
+    // 4. Check Network Status
     if (!isReallyOnline()) {
+      // 5. Offline -> Save to LocalStorage
       localStorage.setItem("pendingAlert", JSON.stringify(alertData));
       alert("Offline → Alert saved locally. Will send when online.");
       setIsSending(false);
       return;
     }
 
+    // 6. Online -> Send to Firebase
     try {
       await addDoc(collection(db, "Alerts"), alertData);
       alert("Help request sent!");
       setMessage("");
     } catch (err) {
+      console.error("Firebase send failed:", err);
+      // Fallback: Queue locally if network fails during send
       localStorage.setItem("pendingAlert", JSON.stringify(alertData));
       alert("Network issue → Alert queued locally.");
     }
