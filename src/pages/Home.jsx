@@ -28,6 +28,7 @@ function Home() {
   const [message, setMessage] = useState("");
   const [isFetchingLocation, setIsFetchingLocation] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
 
   const [activeAlert, setActiveAlert] = useState(null);
   const navigate = useNavigate();
@@ -72,6 +73,8 @@ function Home() {
       },
       (err) => {
         console.error("UI Location Error:", err.message);
+        // If error, we still stop fetching so UI can show error state
+        setCoords({ error: "Location access denied or unavailable." });
         setIsFetchingLocation(false);
       }
     );
@@ -157,15 +160,32 @@ function Home() {
 
     const handleOffline = () => setInternetStatus("Offline");
 
+    // PWA Install Prompt Listener
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
     return () => {
       unsub();
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
   }, [user]);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstallPrompt(null);
+    }
+  };
 
   const sendHelpRequest = async () => {
     // --- Rate limit (local only)
@@ -372,6 +392,24 @@ function Home() {
           {isFetchingLocation ? "Getting Location..." : "Update Information"}
         </button>
 
+        {installPrompt && (
+          <button
+            className="btn"
+            onClick={handleInstallClick}
+            style={{
+              backgroundColor: "#2196F3",
+              color: "white",
+              marginTop: "10px",
+              padding: "10px 20px",
+              border: "none",
+              borderRadius: "5px",
+              fontSize: "1rem"
+            }}
+          >
+            Install App
+          </button>
+        )}
+
         <div className="location-display">
           {isFetchingLocation && <p>Fetching current location...</p>}
 
@@ -383,7 +421,27 @@ function Home() {
           )}
 
           {!isFetchingLocation && coords?.error && (
-            <p>Location Error: {coords.error}</p>
+            <p>
+              Location Error: {coords.error}
+              <br />
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  fetchCurrentLocationForUI();
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "blue",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  padding: 0,
+                  font: "inherit"
+                }}
+              >
+                Allow Location
+              </button>
+            </p>
           )}
         </div>
 
