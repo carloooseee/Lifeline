@@ -130,6 +130,9 @@ async function loadLabels() {
 async function loadUrgencyModel() {
   if (urgencyModel) return;
 
+  // Defensive: Ensure labels are loaded if not already
+  if (!urgencyLabels) await loadLabels();
+
   const json = await (await fetch(URGENCY_MODEL_URL)).json();
   const classes = urgencyLabels;
 
@@ -189,8 +192,13 @@ async function predictCategory(text) {
 // -----------------------------------------
 // Urgency prediction
 // -----------------------------------------
+// -----------------------------------------
+// Urgency prediction
+// -----------------------------------------
 async function predictUrgency(text) {
-  await Promise.all([loadVectorizer(), loadUrgencyModel(), loadLabels()]);
+  // Fix race condition: Labels MUST be loaded before urgency model init
+  await loadLabels();
+  await Promise.all([loadVectorizer(), loadUrgencyModel()]);
 
   const tokens = cleanAndTokens(text);
   const found = new Set();
