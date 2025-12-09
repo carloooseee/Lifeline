@@ -29,12 +29,25 @@ function Home() {
   const [isFetchingLocation, setIsFetchingLocation] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [locationPermissionStatus, setLocationPermissionStatus] = useState("prompt");
 
   const [activeAlert, setActiveAlert] = useState(null);
   const navigate = useNavigate();
   const auth = getAuth(app);
 
   const isReallyOnline = () => navigator.onLine;
+
+  // Check initial permission status
+  useEffect(() => {
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: "geolocation" }).then((result) => {
+        setLocationPermissionStatus(result.state);
+        result.onchange = () => {
+          setLocationPermissionStatus(result.state);
+        };
+      });
+    }
+  }, []);
 
   const saveDataToStorage = (locationData) => {
     const dataToSave = {
@@ -51,7 +64,7 @@ function Home() {
     localStorage.setItem("lastLocation", JSON.stringify(dataToSave));
   };
 
-  const fetchCurrentLocationForUI = () => {
+  const fetchCurrentLocationForUI = (isManual = false) => {
     setIsFetchingLocation(true);
 
     if (!navigator.geolocation) {
@@ -73,6 +86,23 @@ function Home() {
       },
       (err) => {
         console.error("UI Location Error:", err.message);
+
+        // Update permission status based on error if possible
+        if (err.code === 1) setLocationPermissionStatus("denied");
+
+        // Only alert the user if they manually requested it and it was denied/failed
+        if (isManual && err.code === 1) {
+          alert(
+            "⚠️ Location access is BLOCKED.\n\n" +
+            "Your browser is blocking this website from accessing your location.\n\n" +
+            "To fix this:\n" +
+            "1. Click the lock icon 🔒 or settings icon near the website URL.\n" +
+            "2. Find 'Location' permissions.\n" +
+            "3. Change it to 'Allow' or 'Ask'.\n" +
+            "4. Refresh the page."
+          );
+        }
+
         // If error, we still stop fetching so UI can show error state
         setCoords({ error: "Location access denied or unavailable." });
         setIsFetchingLocation(false);
@@ -151,7 +181,8 @@ function Home() {
       if (currUser) processPendingAlert(currUser);
     });
 
-    fetchCurrentLocationForUI();
+    // Auto-fetch on load (silent)
+    fetchCurrentLocationForUI(false);
 
     const handleOnline = () => {
       setInternetStatus("Online");
@@ -386,16 +417,20 @@ function Home() {
 
         <button
           className="btn btn-store"
-          onClick={() => fetchCurrentLocationForUI()}
+          onClick={() => fetchCurrentLocationForUI(true)}
           disabled={isFetchingLocation}
         >
           {isFetchingLocation ? "Getting Location..." : "Update Information"}
         </button>
 
         {installPrompt && (
-          <button
+          <a
+            href="#"
             className="btn"
-            onClick={handleInstallClick}
+            onClick={(e) => {
+              e.preventDefault();
+              handleInstallClick();
+            }}
             style={{
               backgroundColor: "#2196F3",
               color: "white",
@@ -403,11 +438,14 @@ function Home() {
               padding: "10px 20px",
               border: "none",
               borderRadius: "5px",
-              fontSize: "1rem"
+              fontSize: "1rem",
+              textDecoration: "none",
+              display: "inline-block",
+              textAlign: "center"
             }}
           >
             Install App
-          </button>
+          </a>
         )}
 
         <div className="location-display">
@@ -424,23 +462,23 @@ function Home() {
             <p>
               Location Error: {coords.error}
               <br />
-              <button
+              <a
+                href="#"
                 onClick={(e) => {
                   e.preventDefault();
-                  fetchCurrentLocationForUI();
+                  fetchCurrentLocationForUI(true);
                 }}
                 style={{
-                  background: "none",
-                  border: "none",
-                  color: "blue",
+                  color: locationPermissionStatus === "denied" ? "red" : "blue",
                   textDecoration: "underline",
                   cursor: "pointer",
-                  padding: 0,
-                  font: "inherit"
+                  fontWeight: locationPermissionStatus === "denied" ? "bold" : "normal"
                 }}
               >
-                Allow Location
-              </button>
+                {locationPermissionStatus === "denied"
+                  ? "Location Blocked: Click for Help"
+                  : "Allow Location"}
+              </a>
             </p>
           )}
         </div>
