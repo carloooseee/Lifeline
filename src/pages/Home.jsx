@@ -423,31 +423,6 @@ function Home() {
           {isFetchingLocation ? "Getting Location..." : "Update Information"}
         </button>
 
-        {installPrompt && (
-          <a
-            href="#"
-            className="btn"
-            onClick={(e) => {
-              e.preventDefault();
-              handleInstallClick();
-            }}
-            style={{
-              backgroundColor: "#2196F3",
-              color: "white",
-              marginTop: "10px",
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "5px",
-              fontSize: "1rem",
-              textDecoration: "none",
-              display: "inline-block",
-              textAlign: "center"
-            }}
-          >
-            Install App
-          </a>
-        )}
-
         <div className="location-display">
           {isFetchingLocation && <p>Fetching current location...</p>}
 
@@ -530,6 +505,29 @@ function Home() {
           Log out
         </button>
       </div>
+
+      {installPrompt && (
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            handleInstallClick();
+          }}
+          style={{
+            position: "absolute",
+            bottom: "20px",
+            left: "20px",
+            zIndex: 100,
+            color: "#333",
+            textDecoration: "none",
+            fontSize: "0.9rem",
+            cursor: "pointer",
+            fontFamily: "inherit"
+          }}
+        >
+          Install App
+        </a>
+      )}
     </div>
   );
 }
